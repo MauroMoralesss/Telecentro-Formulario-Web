@@ -34,11 +34,11 @@ function TecnicosAdmin() {
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Administrar Técnicos</h2>
+    <div className="admin-container card-container">
+      <h2 className="admin-title">Administrar Técnicos</h2>
 
-      <h3>Crear nuevo técnico</h3>
-      <form onSubmit={handleCrear}>
+      <h3 className="section-title">Crear nuevo técnico</h3>
+      <form className="form-card" onSubmit={handleCrear}>
         <input
           type="text"
           placeholder="Nombre"
@@ -60,26 +60,35 @@ function TecnicosAdmin() {
           onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
           required
         />
-        <button type="submit">Crear técnico</button>
+        <button type="submit" className="btn btn-primary">Crear técnico</button>
       </form>
 
-      <hr />
+      <hr className="divider" />
 
-      <h3>Lista de técnicos</h3>
-      <ul>
+      <h3 className="section-title">Lista de técnicos</h3>
+      <ul className="technician-list">
         {tecnicos.map((t) => (
-          <li key={t.id_tecnico}>
-            {t.id_tecnico} - {t.nombre} ({t.email}) -{" "}
-            {t.activo ? "✅ Activo" : "❌ Inactivo"}{" "}
-            <Link to={`/tecnico/${t.id_tecnico}`}>Ver perfil</Link>{" "}
-            <button onClick={() => toggleEstado(t.id_tecnico, t.activo)}>
-              {t.activo ? "Desactivar" : "Activar"}
-            </button>
+          <li key={t.id_tecnico} className="technician-item">
+            <span>
+              {t.id_tecnico} - {t.nombre} ({t.email}) -{" "}
+              <span className={t.activo ? "estado-activo" : "estado-inactivo"}>
+                {t.activo ? "✅ Activo" : "❌ Inactivo"}
+              </span>
+            </span>
+            <div className="btn-group">
+              <Link to={`/tecnico/${t.id_tecnico}`} className="btn-link">Ver perfil</Link>
+              <button
+                onClick={() => toggleEstado(t.id_tecnico, t.activo)}
+                className="btn btn-secundario"
+              >
+                {t.activo ? "Desactivar" : "Activar"}
+              </button>
+            </div>
           </li>
         ))}
       </ul>
 
-      <button onClick={() => navigate("/dashboard")}>
+      <button onClick={() => navigate("/dashboard")} className="btn btn-back">
         ← Volver al Dashboard
       </button>
     </div>

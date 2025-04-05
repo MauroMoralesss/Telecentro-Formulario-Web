@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "../api/axios";
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import Select from "react-select";
 
 function CrearFormulario() {
@@ -71,11 +72,14 @@ function CrearFormulario() {
           <input name="abonado" onChange={handleChange} required />
         </div>
         <div>
-          <label>Velocidad:</label>
+          <label>Vt:</label>
           <br />
           <input name="vt" onChange={handleChange} required />
         </div>
-        <button type="submit">Crear</button>
+        <button type="submit"> Crear </button>
+        <br />
+        <br />
+        <Link to="/dashboard">← Volver al dashboard</Link>
       </form>
     </div>
   );

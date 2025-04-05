@@ -5,10 +5,16 @@ import { Link } from "react-router-dom";
 
 import axios from "../api/axios.js";
 import FormularioCard from "../components/FormularioCard";
+import FiltrosAvanzados from "../components/FiltrosAvanzados";
 
 function Dashboard() {
   const { usuario, cargando, logout } = useAuth();
   const [filtroEstado, setFiltroEstado] = useState("todos");
+  const [mostrarFiltros, setMostrarFiltros] = useState(false);
+  const [filtroOrden, setFiltroOrden] = useState("");
+  const [filtroCliente, setFiltroCliente] = useState("");
+  const [filtroFecha, setFiltroFecha] = useState("");
+  const [filtroTecnico, setFiltroTecnico] = useState("");
   const [formularios, setFormularios] = useState([]);
   const navigate = useNavigate();
 
@@ -33,31 +39,47 @@ function Dashboard() {
   if (!usuario) return <p>No estás logueado</p>;
 
   return (
-    <div style={{ padding: 20 }}>
-      <h1>Bienvenido, {usuario.nombre}</h1>
-      <p>Rol: {usuario.rol}</p>
+    <div className="dashboard" style={{ maxWidth: 1000, margin: "auto" }}>
+      <h1 style={{ marginBottom: 8 }}>Bienvenido, {usuario.nombre}</h1>
+      <p style={{ marginBottom: 20 }}>Rol: {usuario.rol}</p>
 
-      {usuario?.rol === "admin" && (
-        <button onClick={() => navigate("/crear-formulario")}>
-          ➕ Crear nuevo formulario
+      {/* Navbar de botones */}
+      <div
+        style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}
+      >
+        {usuario?.rol === "admin" && (
+          <>
+            <button onClick={() => navigate("/crear-formulario")}>
+              ➕ Crear formulario
+            </button>
+            <button onClick={() => navigate("/tecnicos")}>
+              👥 Ver técnicos
+            </button>
+          </>
+        )}
+        <button>
+          <Link
+            className="link"
+            style={{ color: "white" }}
+            to={`/tecnico/${usuario.id_tecnico}`}
+          >
+            Ver perfil
+          </Link>
         </button>
-      )}
+        <button onClick={logout}>Cerrar sesión</button>
+      </div>
 
-      <Link to={`/tecnico/${usuario.id_tecnico}`}>Ver perfil</Link>
-      {usuario?.rol === "admin" && (
-        <button onClick={() => navigate("/tecnicos")} style={{ marginLeft: 8 }}>
-          👥 Ver técnicos
-        </button>
-      )}
-      <button onClick={logout}>Cerrar sesión</button>
-      <hr />
-      <h2>Formularios</h2>
+      <hr style={{ marginBottom: 20 }} />
 
-      <div>
-        <label>Filtrar por estado: </label>
+      {/* Filtro */}
+      <div style={{ marginBottom: 20 }}>
+        <label>
+          <strong>Filtrar por estado:</strong>
+        </label>{" "}
         <select
           value={filtroEstado}
           onChange={(e) => setFiltroEstado(e.target.value)}
+          style={{ padding: 6, marginLeft: 8 }}
         >
           <option value="todos">Todos</option>
           <option value="Iniciado">Iniciado</option>
@@ -66,16 +88,53 @@ function Dashboard() {
           <option value="Rechazado">Rechazado</option>
         </select>
       </div>
+      <div style={{ marginBottom: 10 }}>
+        <button onClick={() => setMostrarFiltros(!mostrarFiltros)}>
+          {mostrarFiltros
+            ? "Ocultar filtros avanzados"
+            : "Mostrar filtros avanzados"}
+        </button>
+      </div>
 
-      {formularios.length === 0 ? (
-        <p>No hay formularios aún.</p>
-      ) : (
-        formularios
-          .filter((f) => filtroEstado === "todos" || f.estado === filtroEstado)
-          .map((form) => (
-            <FormularioCard key={form.id_formulario} form={form} />
-          ))
+      {mostrarFiltros && (
+        <FiltrosAvanzados
+          filtroOrden={filtroOrden}
+          setFiltroOrden={setFiltroOrden}
+          filtroCliente={filtroCliente}
+          setFiltroCliente={setFiltroCliente}
+          filtroFecha={filtroFecha}
+          setFiltroFecha={setFiltroFecha}
+          filtroTecnico={filtroTecnico}
+          setFiltroTecnico={setFiltroTecnico}
+        />
       )}
+
+      <div>
+        {(() => {
+          const filtrados = formularios.filter(
+            (f) =>
+              (filtroEstado === "todos" || f.estado === filtroEstado) &&
+              (filtroOrden === "" || f.nro_orden.includes(filtroOrden)) &&
+              (filtroCliente === "" || f.nro_cliente.includes(filtroCliente)) &&
+              (filtroFecha === "" ||
+                f.fecha_creacion.startsWith(filtroFecha)) &&
+              (filtroTecnico === "" ||
+                String(f.tecnico_id).includes(filtroTecnico))
+          );
+
+          if (filtrados.length === 0) {
+            return (
+              <p style={{ textAlign: "center", marginTop: 20 }}>
+                No hay formularios con los filtros seleccionados.
+              </p>
+            );
+          }
+
+          return filtrados.map((form) => (
+            <FormularioCard key={form.id_formulario} form={form} />
+          ));
+        })()}
+      </div>
     </div>
   );
 }

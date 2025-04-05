@@ -17,7 +17,7 @@ function TecnicoPerfil() {
   if (!tecnico) return <p>Cargando técnico...</p>;
 
   return (
-    <div style={{ padding: 20 }}>
+    <div style={{ padding: 20 }} class = "card-container">
       <h2>Perfil del Técnico</h2>
       <p>
         <strong>ID:</strong> {tecnico.id_tecnico}

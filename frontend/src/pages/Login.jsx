@@ -12,35 +12,39 @@ function Login() {
 
     try {
       await axios.post("/signin", { email, password }, {
-        withCredentials: true, // importante para que se guarde la cookie
+        withCredentials: true,
       });
-      window.location.href = "/dashboard"; // redirige después de loguear
+      window.location.href = "/dashboard";
     } catch (err) {
       setError(err.response?.data?.message || "Error al iniciar sesión");
     }
   };
 
   return (
-    <div style={{ maxWidth: 400, margin: "auto", padding: 20 }}>
-      <h2>Iniciar sesión</h2>
-      <form onSubmit={handleLogin}>
-        <input
-          type="email"
-          placeholder="Correo"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-        /><br />
-        <input
-          type="password"
-          placeholder="Contraseña"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-        /><br />
-        <button type="submit">Entrar</button>
-      </form>
-      {error && <p style={{ color: "red" }}>{error}</p>}
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Iniciar sesión</h2>
+
+        {error && <div className="login-error">{error}</div>}
+
+        <form onSubmit={handleLogin}>
+          <input
+            type="email"
+            placeholder="Correo"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit">Entrar</button>
+        </form>
+      </div>
     </div>
   );
 }
