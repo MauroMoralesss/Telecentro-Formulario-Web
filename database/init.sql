@@ -37,6 +37,9 @@ VALUES (
   true
 );
 
+ALTER TABLE formulario ALTER COLUMN motivo_cierre DROP NOT NULL;
+ALTER TABLE formulario ALTER COLUMN checklist DROP NOT NULL;
+
 /* INSERT INTO opciones_checklist (opcion)
 VALUES 
   ('Cableado realizado correctamente'),

@@ -52,15 +52,15 @@ import {
   // Completar formulario (técnico)
   export const completar = async (req, res) => {
     const formulario = await obtenerFormularioPorId(req.params.id);
-  
-    if (!formulario) {
-      return res.status(404).json({ message: "Formulario no encontrado" });
-    }
-  
+
     if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
       return res.status(403).json({
         message: "Este formulario no puede ser completado en su estado actual",
       });
+    }
+  
+    if (!formulario) {
+      return res.status(404).json({ message: "Formulario no encontrado" });
     }
   
     const { motivo_cierre, checklist, observaciones } = req.body;
