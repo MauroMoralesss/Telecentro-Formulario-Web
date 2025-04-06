@@ -7,7 +7,7 @@ export const AuthContext = createContext();
 export const AuthProvider = ({ children }) => {
   const [usuario, setUsuario] = useState(null);
   const [cargando, setCargando] = useState(true);
-  const navigate = useNavigate(); // ✅ correcto: dentro del componente
+  const navigate = useNavigate();
 
   const getProfile = async () => {
     try {
@@ -25,7 +25,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await axios.post("/signout", {}, { withCredentials: true });
     setUsuario(null);
-    navigate("/"); // ✅ redirige después de cerrar sesión
+    navigate("/");
   };
 
   useEffect(() => {
@@ -39,5 +39,4 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
-// Hook personalizado
 export const useAuth = () => useContext(AuthContext);

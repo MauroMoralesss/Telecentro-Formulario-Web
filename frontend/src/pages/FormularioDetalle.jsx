@@ -82,85 +82,97 @@ function FormularioDetalle() {
 
   return (
     <div className="formulario-detalle-container card-container">
-      <div className="card">
-        <h2>Formulario #{formulario.id_formulario}</h2>
-        <p>
-          <strong>Técnico ID:</strong> {formulario.tecnico_id}
-        </p>
-        <p>
-          <strong>Técnico:</strong>{" "}
-          {tecnico
-            ? `${tecnico.nombre}`
-            : `ID ${formulario.tecnico_id}`}
-        </p>
-        <p>
-          <strong>Orden:</strong> {formulario.nro_orden}
-        </p>
-        <p>
-          <strong>Cliente:</strong> {formulario.nro_cliente}
-        </p>
-        <p>
-          <strong>Abonado:</strong> {formulario.abonado}
-        </p>
-        <p>
-          <strong>Vt:</strong> {formulario.vt}
-        </p>
-        <p>
-          <strong>Estado:</strong>{" "}
-          <span className={`estado-${formulario.estado.toLowerCase()}`}>
-            {formulario.estado}
-          </span>
-        </p>
-        <p>
-          <strong>Motivo cierre:</strong> {formulario.motivo_cierre || "—"}
-        </p>
+      <div className="card" style={{ padding: 20 }}>
+        <h2 style={{ marginBottom: 12 }}>
+          📋 Formulario #{formulario.id_formulario}
+        </h2>
+
+        <div className="info-grid">
+          <p>
+            <strong>Técnico:</strong>{" "}
+            {tecnico ? tecnico.nombre : `ID ${formulario.tecnico_id}`}
+          </p>
+          <p>
+            <strong>Orden:</strong> {formulario.nro_orden}
+          </p>
+          <p>
+            <strong>Cliente:</strong> {formulario.nro_cliente}
+          </p>
+          <p>
+            <strong>Abonado:</strong> {formulario.abonado}
+          </p>
+          <p>
+            <strong>Velocidad:</strong> {formulario.vt}
+          </p>
+          <p>
+            <strong>Estado:</strong>{" "}
+            <span className={`estado-${formulario.estado.toLowerCase()}`}>
+              {formulario.estado}
+            </span>
+          </p>
+          <p>
+            <strong>Fecha de creación:</strong>{" "}
+            {new Date(formulario.fecha_creacion).toLocaleString()}
+          </p>
+        </div>
+
+        <hr style={{ margin: "12px 0" }} />
+
         <div>
-          <strong>Checklist:</strong>
-          {formulario.checklist ? (
-            <ul style={{ margin: 0, paddingLeft: 20 }}>
-              {formulario.checklist.split(",").map((item, index) => (
-                <li key={index}>✅ {item.trim()}</li>
-              ))}
-            </ul>
-          ) : (
-            <span>—</span>
+          <p>
+            <strong>Motivo de cierre:</strong> {formulario.motivo_cierre || "—"}
+          </p>
+          <p>
+            <strong>Observaciones:</strong> {formulario.observaciones || "—"}
+          </p>
+
+          <div>
+            <strong>Checklist:</strong>
+            {formulario.checklist ? (
+              <ul style={{ margin: "8px 0", paddingLeft: 20 }}>
+                {formulario.checklist.split(",").map((item, i) => (
+                  <li key={i}>✅ {item.trim()}</li>
+                ))}
+              </ul>
+            ) : (
+              <p>—</p>
+            )}
+          </div>
+
+          {formulario.url_archivo && (
+            <>
+              <p>
+                <strong>Archivo:</strong>{" "}
+                <a
+                  href={formulario.url_archivo}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ver archivo
+                </a>
+              </p>
+              <div className="preview-archivo" style={{ marginTop: 10 }}>
+                {formulario.url_archivo.match(/\.(jpg|jpeg|png|gif)$/i) ? (
+                  <img
+                    src={formulario.url_archivo}
+                    alt="Vista previa"
+                    style={{ maxWidth: "100%", borderRadius: 6 }}
+                  />
+                ) : formulario.url_archivo.match(/\.(mp4|webm)$/i) ? (
+                  <video controls style={{ maxWidth: "100%", borderRadius: 6 }}>
+                    <source src={formulario.url_archivo} type="video/mp4" />
+                    Tu navegador no soporta este formato.
+                  </video>
+                ) : (
+                  <p>No se puede mostrar vista previa.</p>
+                )}
+              </div>
+            </>
           )}
         </div>
-        <p>
-          <strong>Observaciones:</strong> {formulario.observaciones || "—"}
-        </p>
-        {formulario.url_archivo && (
-          <>
-            <p>
-              <strong>Archivo:</strong>{" "}
-              <a
-                href={formulario.url_archivo}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Ver archivo
-              </a>
-            </p>
-            <div className="preview-archivo">
-              {formulario.url_archivo.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                <img src={formulario.url_archivo} alt="Vista previa" />
-              ) : formulario.url_archivo.match(/\.(mp4|webm)$/i) ? (
-                <video controls>
-                  <source src={formulario.url_archivo} type="video/mp4" />
-                  Tu navegador no soporta este formato.
-                </video>
-              ) : (
-                <p>
-                  No se puede mostrar una vista previa para este tipo de
-                  archivo.
-                </p>
-              )}
-            </div>
-          </>
-        )}
 
         {usuario?.rol === "admin" && formulario.estado === "En revision" && (
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 20 }}>
             <button onClick={() => cambiarEstado("Aprobado")} className="btn">
               ✅ Aprobar
             </button>
@@ -175,7 +187,7 @@ function FormularioDetalle() {
         )}
 
         {usuario?.rol === "tecnico" && formulario.estado === "Rechazado" && (
-          <p className="alert-warning">
+          <p className="alert-warning" style={{ marginTop: 12 }}>
             ⚠️ Este formulario fue rechazado. Debe ser corregido.
           </p>
         )}
@@ -202,8 +214,8 @@ function FormularioDetalle() {
 
             <label>Checklist:</label>
             {opcionesChecklist.map((opcion) => (
-              <div key={opcion}>
-                <label>
+              <div key={opcion} className="checkbox-container">
+                <label className="checkbox-label">
                   <input
                     type="checkbox"
                     value={opcion}
@@ -217,8 +229,8 @@ function FormularioDetalle() {
                         );
                       }
                     }}
-                  />{" "}
-                  {opcion}
+                  />
+                  <span>{opcion}</span>
                 </label>
               </div>
             ))}

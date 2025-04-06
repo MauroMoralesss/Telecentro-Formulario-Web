@@ -104,8 +104,10 @@ function Dashboard() {
           setFiltroCliente={setFiltroCliente}
           filtroFecha={filtroFecha}
           setFiltroFecha={setFiltroFecha}
-          filtroTecnico={filtroTecnico}
-          setFiltroTecnico={setFiltroTecnico}
+          {...(usuario.rol === "admin" && {
+            filtroTecnico,
+            setFiltroTecnico,
+          })}
         />
       )}
 
@@ -130,9 +132,13 @@ function Dashboard() {
             );
           }
 
-          return filtrados.map((form) => (
-            <FormularioCard key={form.id_formulario} form={form} />
-          ));
+          return filtrados
+            .sort(
+              (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+            ) // 👈 más nuevos primero
+            .map((form) => (
+              <FormularioCard key={form.id_formulario} form={form} />
+            ));
         })()}
       </div>
     </div>

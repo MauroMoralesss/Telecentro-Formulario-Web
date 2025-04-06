@@ -1,6 +1,10 @@
 import {z} from 'zod'
 
 export const signupSchema = z.object({
+    id_tecnico: z.number({
+        required_error: 'El ID TECNICO es requerido',
+        invalid_type_error: 'El ID TECNICO debe ser un numero'
+    }),
     nombre: z.string({
         required_error: 'El nombre es requerido',
         invalid_type_error: 'El nombre debe ser un texto'
@@ -21,11 +25,9 @@ export const signupSchema = z.object({
 })
 
 export const signinSchema = z.object({
-    email: z.string({
-        required_error: 'El email es requerido',
-        invalid_type_error: 'El email debe ser un texto'
-    }).email({
-        message: 'El email debe ser un email valido'
+    id_tecnico: z.number({
+        required_error: 'El ID TECNICO es requerido',
+        invalid_type_error: 'El ID TECNICO debe ser un numero'
     }),
     password: z.string({
         required_error: 'La contraseña es requerida',

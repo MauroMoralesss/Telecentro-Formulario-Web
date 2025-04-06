@@ -33,13 +33,18 @@ function FiltrosAvanzados({
           onChange={(e) => setFiltroFecha(e.target.value)}
         />
   
-        <label>ID Técnico:</label>
-        <input
-          type="text"
-          value={filtroTecnico}
-          onChange={(e) => setFiltroTecnico(e.target.value)}
-          placeholder="Buscar por técnico"
-        />
+        {/* Solo mostrar si se pasan las props del filtro técnico */}
+        {filtroTecnico !== undefined && setFiltroTecnico && (
+          <>
+            <label>ID Técnico:</label>
+            <input
+              type="text"
+              value={filtroTecnico}
+              onChange={(e) => setFiltroTecnico(e.target.value)}
+              placeholder="Buscar por técnico"
+            />
+          </>
+        )}
       </div>
     );
   }

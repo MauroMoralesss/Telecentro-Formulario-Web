@@ -2,7 +2,7 @@ import { useState } from "react";
 import axios from "../api/axios.js";
 
 function Login() {
-  const [email, setEmail] = useState("");
+  const [id_tecnico, setIdTecnico] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
@@ -11,7 +11,7 @@ function Login() {
     setError("");
 
     try {
-      await axios.post("/signin", { email, password }, {
+      await axios.post("/signin", { id_tecnico: parseInt(id_tecnico), password }, {
         withCredentials: true,
       });
       window.location.href = "/dashboard";
@@ -28,20 +28,26 @@ function Login() {
         {error && <div className="login-error">{error}</div>}
 
         <form onSubmit={handleLogin}>
-          <input
-            type="email"
-            placeholder="Correo"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-          />
-          <input
-            type="password"
-            placeholder="Contraseña"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
+          <div className="input-group">
+            <label>ID Técnico</label>
+            <input
+              type="number"
+              placeholder="Ingresa tu ID"
+              value={id_tecnico}
+              onChange={(e) => setIdTecnico(e.target.value)}
+              required
+            />
+          </div>
+          <div className="input-group">
+            <label>Contraseña</label>
+            <input
+              type="password"
+              placeholder="Ingresa tu contraseña"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
           <button type="submit">Entrar</button>
         </form>
       </div>

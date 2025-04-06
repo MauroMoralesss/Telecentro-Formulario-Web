@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "../api/axios";
-import { useNavigate } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import Select from "react-select";
 
 function CrearFormulario() {
@@ -13,12 +12,14 @@ function CrearFormulario() {
     abonado: "",
     vt: "",
   });
+  const [errorMsg, setErrorMsg] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+
   const navigate = useNavigate();
 
   useEffect(() => {
     const cargarTecnicos = async () => {
       const res = await axios.get("/tecnicos", { withCredentials: true });
-      // filtramos solo los que tienen rol tecnico
       setTecnicos(res.data.filter((t) => t.rol === "tecnico"));
     };
     cargarTecnicos();
@@ -35,52 +36,61 @@ function CrearFormulario() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    await axios.post("/formularios", form, { withCredentials: true });
-    alert("Formulario creado correctamente");
-    navigate("/dashboard");
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    try {
+      await axios.post("/formularios", form, { withCredentials: true });
+      setSuccessMsg("Formulario creado correctamente");
+
+      setTimeout(() => {
+        navigate("/dashboard");
+      }, 2000);
+    } catch (error) {
+      const mensaje = error.response?.data?.message || "Error del servidor";
+      setErrorMsg(mensaje);
+    }
   };
 
   return (
-    <div style={{ padding: 20 }}>
-      <h2>Crear nuevo formulario</h2>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>Técnico:</label>
-          <br />
-          <Select
-            options={opciones}
-            onChange={(opcion) =>
-              setForm({ ...form, tecnico_id: opcion.value })
-            }
-            placeholder="Seleccionar técnico..."
-            isSearchable
-          />
-        </div>
-        <div>
-          <label>Nro Orden:</label>
-          <br />
-          <input name="nro_orden" onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Nro Cliente:</label>
-          <br />
-          <input name="nro_cliente" onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Abonado:</label>
-          <br />
-          <input name="abonado" onChange={handleChange} required />
-        </div>
-        <div>
-          <label>Vt:</label>
-          <br />
-          <input name="vt" onChange={handleChange} required />
-        </div>
-        <button type="submit"> Crear </button>
-        <br />
-        <br />
-        <Link to="/dashboard">← Volver al dashboard</Link>
+    <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
+      <h2 className="form-title">Crear nuevo formulario</h2>
+
+      {errorMsg && <div className="alert-error">⚠️ {errorMsg}</div>}
+      {successMsg && <div className="alert-success">✅ {successMsg}</div>}
+
+      <form className="form-card" onSubmit={handleSubmit}>
+        <label>Técnico:</label>
+        <Select
+          options={opciones}
+          onChange={(opcion) =>
+            setForm({ ...form, tecnico_id: opcion.value })
+          }
+          placeholder="Seleccionar técnico..."
+          isSearchable
+          styles={{ menu: (base) => ({ ...base, zIndex: 999 }) }}
+        />
+
+        <label>Nro Orden:</label>
+        <input name="nro_orden" onChange={handleChange} required />
+
+        <label>Nro Cliente:</label>
+        <input name="nro_cliente" onChange={handleChange} required />
+
+        <label>Abonado:</label>
+        <input name="abonado" onChange={handleChange} required />
+
+        <label>Vt:</label>
+        <input name="vt" onChange={handleChange} required />
+
+        <button type="submit" className="btn btn-primary" style={{ marginTop: 12 }}>
+          Crear
+        </button>
       </form>
+
+      <div style={{ marginTop: 20 }}>
+        <Link to="/dashboard">← Volver al dashboard</Link>
+      </div>
     </div>
   );
 }
