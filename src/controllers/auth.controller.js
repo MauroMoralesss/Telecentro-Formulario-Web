@@ -16,6 +16,14 @@ export const signin = async (req, res) => {
   }
 
   const tecnico = result.rows[0];
+
+  // ✅ Nueva validación: si el técnico está inactivo
+  if (!tecnico.activo) {
+    return res.status(403).json({
+      message: "El técnico está inactivo y no puede iniciar sesión",
+    });
+  }
+
   const validPassword = await bcrypt.compare(password, tecnico.password);
 
   if (!validPassword) {
@@ -40,6 +48,7 @@ export const signin = async (req, res) => {
     rol: tecnico.rol,
   });
 };
+
 
 export const signup = async (req, res) => {
   const { id_tecnico, nombre, email, password, rol, activo } = req.body;

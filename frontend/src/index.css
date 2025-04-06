@@ -319,6 +319,7 @@ input {
 }
 
 .tecnicos-grid {
+  margin-top: 15px;
   display: flex;
   flex-wrap: wrap;
   gap: 20px;
@@ -475,4 +476,26 @@ input[type="checkbox"] {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 8px;
+}
+
+.paginacion {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.btn-paginacion {
+  padding: 6px 12px;
+  background-color: #1d4ed8;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.btn-paginacion:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
 }

@@ -16,6 +16,9 @@ function Dashboard() {
   const [filtroFecha, setFiltroFecha] = useState("");
   const [filtroTecnico, setFiltroTecnico] = useState("");
   const [formularios, setFormularios] = useState([]);
+  const [paginaActual, setPaginaActual] = useState(1);
+  const formulariosPorPagina = 10;
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -35,18 +38,36 @@ function Dashboard() {
     if (usuario) cargarFormularios();
   }, [usuario]);
 
+  useEffect(() => {
+    setPaginaActual(1); // Reiniciar al cambiar filtros
+  }, [filtroEstado, filtroOrden, filtroCliente, filtroFecha, filtroTecnico]);
+
   if (cargando) return <p>Cargando sesión...</p>;
   if (!usuario) return <p>No estás logueado</p>;
+
+  const filtrados = formularios.filter(
+    (f) =>
+      (filtroEstado === "todos" || f.estado === filtroEstado) &&
+      (filtroOrden === "" || f.nro_orden.includes(filtroOrden)) &&
+      (filtroCliente === "" || f.nro_cliente.includes(filtroCliente)) &&
+      (filtroFecha === "" || f.fecha_creacion.startsWith(filtroFecha)) &&
+      (filtroTecnico === "" || String(f.tecnico_id).includes(filtroTecnico))
+  );
+
+  const filtradosOrdenados = filtrados.sort(
+    (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
+  );
+
+  const totalPaginas = Math.ceil(filtradosOrdenados.length / formulariosPorPagina);
+  const inicio = (paginaActual - 1) * formulariosPorPagina;
+  const formulariosPagina = filtradosOrdenados.slice(inicio, inicio + formulariosPorPagina);
 
   return (
     <div className="dashboard" style={{ maxWidth: 1000, margin: "auto" }}>
       <h1 style={{ marginBottom: 8 }}>Bienvenido, {usuario.nombre}</h1>
       <p style={{ marginBottom: 20 }}>Rol: {usuario.rol}</p>
 
-      {/* Navbar de botones */}
-      <div
-        style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}
-      >
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 10, marginBottom: 20 }}>
         {usuario?.rol === "admin" && (
           <>
             <button onClick={() => navigate("/crear-formulario")}>
@@ -58,11 +79,7 @@ function Dashboard() {
           </>
         )}
         <button>
-          <Link
-            className="link"
-            style={{ color: "white" }}
-            to={`/tecnico/${usuario.id_tecnico}`}
-          >
+          <Link className="link" style={{ color: "white" }} to={`/tecnico/${usuario.id_tecnico}`}>
             Ver perfil
           </Link>
         </button>
@@ -71,7 +88,6 @@ function Dashboard() {
 
       <hr style={{ marginBottom: 20 }} />
 
-      {/* Filtro */}
       <div style={{ marginBottom: 20 }}>
         <label>
           <strong>Filtrar por estado:</strong>
@@ -88,11 +104,10 @@ function Dashboard() {
           <option value="Rechazado">Rechazado</option>
         </select>
       </div>
+
       <div style={{ marginBottom: 10 }}>
         <button onClick={() => setMostrarFiltros(!mostrarFiltros)}>
-          {mostrarFiltros
-            ? "Ocultar filtros avanzados"
-            : "Mostrar filtros avanzados"}
+          {mostrarFiltros ? "Ocultar filtros avanzados" : "Mostrar filtros avanzados"}
         </button>
       </div>
 
@@ -112,34 +127,40 @@ function Dashboard() {
       )}
 
       <div>
-        {(() => {
-          const filtrados = formularios.filter(
-            (f) =>
-              (filtroEstado === "todos" || f.estado === filtroEstado) &&
-              (filtroOrden === "" || f.nro_orden.includes(filtroOrden)) &&
-              (filtroCliente === "" || f.nro_cliente.includes(filtroCliente)) &&
-              (filtroFecha === "" ||
-                f.fecha_creacion.startsWith(filtroFecha)) &&
-              (filtroTecnico === "" ||
-                String(f.tecnico_id).includes(filtroTecnico))
-          );
-
-          if (filtrados.length === 0) {
-            return (
-              <p style={{ textAlign: "center", marginTop: 20 }}>
-                No hay formularios con los filtros seleccionados.
-              </p>
-            );
-          }
-
-          return filtrados
-            .sort(
-              (a, b) => new Date(b.fecha_creacion) - new Date(a.fecha_creacion)
-            ) // 👈 más nuevos primero
-            .map((form) => (
+        {filtradosOrdenados.length === 0 ? (
+          <p style={{ textAlign: "center", marginTop: 20 }}>
+            No hay formularios con los filtros seleccionados.
+          </p>
+        ) : (
+          <>
+            {formulariosPagina.map((form) => (
               <FormularioCard key={form.id_formulario} form={form} />
-            ));
-        })()}
+            ))}
+
+            {/* Navegación de páginas */}
+            <div style={{ textAlign: "center", marginTop: 20 }}>
+              <button
+                onClick={() => setPaginaActual((prev) => Math.max(prev - 1, 1))}
+                disabled={paginaActual === 1}
+                style={{ marginRight: 10 }}
+              >
+                ← Anterior
+              </button>
+              <span>
+                Página {paginaActual} de {totalPaginas}
+              </span>
+              <button
+                onClick={() =>
+                  setPaginaActual((prev) => Math.min(prev + 1, totalPaginas))
+                }
+                disabled={paginaActual === totalPaginas}
+                style={{ marginLeft: 10 }}
+              >
+                Siguiente →
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
