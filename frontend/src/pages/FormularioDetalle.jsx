@@ -19,6 +19,8 @@ function FormularioDetalle() {
   const [motivoCierre, setMotivoCierre] = useState("");
   const [observaciones, setObservaciones] = useState("");
   const [archivo, setArchivo] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [alerta, setAlerta] = useState("");
 
   const { usuario } = useAuth();
 
@@ -56,12 +58,19 @@ function FormularioDetalle() {
     e.preventDefault();
     if (enviando) return;
 
+    if (!archivo) {
+      setAlerta("❌ Debe adjuntar un archivo antes de enviar el formulario.");
+      setTimeout(() => setAlerta(""), 4000);
+      return;
+    }
+
     setEnviando(true);
+    setAlerta("");
     const formData = new FormData();
     formData.append("motivo_cierre", motivoCierre);
     formData.append("checklist", seleccionados.join(", "));
     formData.append("observaciones", observaciones);
-    if (archivo) formData.append("archivo", archivo);
+    formData.append("archivo", archivo);
 
     try {
       const res = await axios.patch(
@@ -72,11 +81,13 @@ function FormularioDetalle() {
         }
       );
       setFormulario(res.data);
-      alert("Formulario enviado correctamente");
+      setAlerta("✅ Formulario enviado correctamente");
     } catch (error) {
       console.error("Error al completar formulario", error);
+      setAlerta("❌ Error al enviar el formulario");
     } finally {
       setEnviando(false);
+      setTimeout(() => setAlerta(""), 4000);
     }
   };
 
@@ -244,11 +255,45 @@ function FormularioDetalle() {
             <label>Archivo:</label>
             <input
               type="file"
-              onChange={(e) => setArchivo(e.target.files[0])}
+              accept="video/*"
+              capture="environment"
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setArchivo(file);
+                setPreviewUrl(URL.createObjectURL(file));
+              }}
             />
 
-            <button type="submit" className="btn" style={{ marginTop: 10 }}>
-              Enviar formulario
+            {previewUrl && (
+              <div style={{ marginTop: "1rem" }}>
+                <p><strong>Vista previa del video:</strong></p>
+                <video
+                  src={previewUrl}
+                  controls
+                  width="100%"
+                  style={{ borderRadius: "8px", maxHeight: "300px" }}
+                />
+              </div>
+            )}
+
+            {alerta && (
+              <div
+                className={
+                  alerta.includes("✅") ? "alert-success" : "alert-error"
+                }
+                style={{ marginTop: 10 }}
+              >
+                {alerta}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              className="btn"
+              disabled={enviando}
+              style={{ marginTop: 10 }}
+            >
+              {enviando ? "Enviando..." : "Enviar formulario"}
             </button>
           </form>
         )}
