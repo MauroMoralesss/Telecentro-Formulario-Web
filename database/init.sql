@@ -62,3 +62,6 @@ WHERE motivo_cierre = 'Conformidad de cliente';
 UPDATE formulario
 SET motivo_cierre = 'Varios / otros'
 WHERE motivo_cierre = 'Evento fuera de norma'; */
+
+ALTER TABLE formulario ADD COLUMN motivo_rechazo TEXT;
+ALTER TABLE formulario ADD COLUMN fecha_modificacion TIMESTAMP;

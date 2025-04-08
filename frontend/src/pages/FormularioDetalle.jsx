@@ -3,6 +3,8 @@ import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
 
+import { AiOutlineWarning } from "react-icons/ai";
+
 function FormularioDetalle() {
   const { id } = useParams();
   const [formulario, setFormulario] = useState(null);
@@ -23,6 +25,7 @@ function FormularioDetalle() {
   const [archivo, setArchivo] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
   const [alerta, setAlerta] = useState("");
+  const [motivoRechazo, setMotivoRechazo] = useState("");
 
   const { usuario } = useAuth();
 
@@ -45,12 +48,17 @@ function FormularioDetalle() {
 
   if (!formulario) return <p>Cargando formulario...</p>;
 
-  const cambiarEstado = async (nuevoEstado) => {
+  const cambiarEstado = async (nuevoEstado, motivo = "") => {
     try {
-      await axios.patch(`/formularios/${formulario.id_formulario}/estado`, {
-        estado: nuevoEstado,
-      });
-      setFormulario({ ...formulario, estado: nuevoEstado });
+      const payload = { estado: nuevoEstado };
+      if (nuevoEstado === "Rechazado") payload.motivo_rechazo = motivo;
+
+      const res = await axios.patch(
+        `/formularios/${formulario.id_formulario}/estado`,
+        payload,
+        { withCredentials: true }
+      );
+      setFormulario(res.data);
     } catch (err) {
       console.error("Error al cambiar estado", err);
     }
@@ -185,24 +193,84 @@ function FormularioDetalle() {
         </div>
 
         {usuario?.rol === "admin" && formulario.estado === "En revision" && (
-          <div style={{ marginTop: 20 }}>
-            <button onClick={() => cambiarEstado("Aprobado")} className="btn">
-              ✅ Aprobar
-            </button>
-            <button
-              onClick={() => cambiarEstado("Rechazado")}
-              className="btn btn-secundario"
-              style={{ marginLeft: 10 }}
-            >
-              ❌ Rechazar
-            </button>
+          <div
+            style={{
+              marginTop: 40,
+              border: "1px solid #ddd",
+              borderRadius: 10,
+              padding: 20,
+              backgroundColor: "#f9f9f9",
+            }}
+          >
+            <h3 style={{ marginBottom: 20, color: "#2c3e50" }}>
+              🛠 Acciones del administrador
+            </h3>
+
+            <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+              <button
+                onClick={() => cambiarEstado("Aprobado")}
+                className="btn btn-verde"
+                style={{
+                  flex: 1,
+                  minWidth: 200,
+                  padding: "12px",
+                  fontWeight: "bold",
+                  borderRadius: 6,
+                }}
+              >
+                ✅ Aprobar formulario
+              </button>
+
+              <div style={{ flex: 3 }}>
+                <input
+                  type="text"
+                  value={motivoRechazo}
+                  onChange={(e) => setMotivoRechazo(e.target.value)}
+                  placeholder="Ej: Faltan observaciones o archivo incorrecto"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    borderRadius: 6,
+                    border: "1px solid #ccc",
+                    marginBottom: 10,
+                  }}
+                />
+
+                <button
+                  onClick={() => cambiarEstado("Rechazado", motivoRechazo)}
+                  disabled={!motivoRechazo}
+                  className="btn btn-rojo"
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    fontWeight: "bold",
+                    borderRadius: 6,
+                  }}
+                >
+                  ❌ Rechazar formulario
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
         {usuario?.rol === "tecnico" && formulario.estado === "Rechazado" && (
-          <p className="alert-warning" style={{ marginTop: 12 }}>
-            ⚠️ Este formulario fue rechazado. Debe ser corregido.
-          </p>
+          <div className="rechazo-alert">
+            <div className="rechazo-icon">
+              <AiOutlineWarning />
+            </div>
+            <div>
+              <p className="rechazo-titulo">
+                Este formulario fue rechazado. Debe ser corregido.
+              </p>
+              {formulario.motivo_rechazo && (
+                <p className="rechazo-detalle">
+                  <strong>Motivo del rechazo:</strong>{" "}
+                  {formulario.motivo_rechazo}
+                </p>
+              )}
+            </div>
+          </div>
         )}
       </div>
 

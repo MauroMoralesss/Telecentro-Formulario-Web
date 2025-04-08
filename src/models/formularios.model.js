@@ -9,8 +9,8 @@ export const crearFormulario = async ({
 }) => {
   const result = await pool.query(
     `INSERT INTO formulario (
-      tecnico_id, nro_orden, nro_cliente, abonado, vt
-    ) VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      tecnico_id, nro_orden, nro_cliente, abonado, vt, fecha_modificacion
+    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP) RETURNING *`,
     [tecnico_id, nro_orden, nro_cliente, abonado, vt]
   );
   return result.rows[0];
@@ -39,6 +39,8 @@ export const actualizarFormulario = async (id, datos) => {
     valores.push(datos[campo]);
     i++;
   }
+
+  campos.push(`fecha_modificacion = CURRENT_TIMESTAMP`);
 
   valores.push(id); // último valor es el id
 
