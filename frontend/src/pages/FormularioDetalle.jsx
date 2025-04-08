@@ -13,6 +13,8 @@ function FormularioDetalle() {
     "Cableado realizado correctamente",
     "Inconveniente con cliente",
     "Daño a la propiedad",
+    "Evento fuera de norma",
+    "Niveles fuera de rango",
   ];
 
   const [seleccionados, setSeleccionados] = useState([]);
@@ -207,23 +209,7 @@ function FormularioDetalle() {
       {usuario?.rol === "tecnico" &&
         ["Iniciado", "Rechazado"].includes(formulario.estado) && (
           <form onSubmit={enviarFormulario} className="form-card">
-            <label>Motivo cierre:</label>
-            <select
-              value={motivoCierre}
-              onChange={(e) => setMotivoCierre(e.target.value)}
-              required
-            >
-              <option value="">Seleccionar...</option>
-              <option value="Evento fuera de norma">
-                Evento fuera de norma
-              </option>
-              <option value="Conformidad de cliente">
-                Conformidad de cliente
-              </option>
-              <option value="Varios / otros">Varios / otros</option>
-            </select>
-
-            <label>Checklist:</label>
+            <label>Motivos de instalación:</label>
             {opcionesChecklist.map((opcion) => (
               <div key={opcion} className="checkbox-container">
                 <label className="checkbox-label">
@@ -265,8 +251,10 @@ function FormularioDetalle() {
             />
 
             {previewUrl && (
-              <div style={{ marginTop: "1rem" }}>
-                <p><strong>Vista previa del video:</strong></p>
+              <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                <p>
+                  <strong>Vista previa del video:</strong>
+                </p>
                 <video
                   src={previewUrl}
                   controls
@@ -286,6 +274,25 @@ function FormularioDetalle() {
                 {alerta}
               </div>
             )}
+
+            <label>Motivo cierre:</label>
+            <select
+              value={motivoCierre}
+              onChange={(e) => setMotivoCierre(e.target.value)}
+              required
+            >
+              <option value="">Seleccionar...</option>
+              <option value="Instalacion ok">Instalacion ok</option>
+              <option value="Conformidad del cliente">
+                Conformidad del cliente
+              </option>
+              <option value="Desconformidad del cliente">
+                Desconformidad del cliente
+              </option>
+              <option value="Ausente">Ausente</option>
+              <option value="Datos erróneos">Datos erróneos</option>
+              <option value="Varios / otros">Varios / otros</option>
+            </select>
 
             <button
               type="submit"

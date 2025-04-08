@@ -46,3 +46,19 @@ VALUES
   ('Inconveniente con cliente'),
   ('Daño a la propiedad');
  */
+
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Instalacion ok';
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Conformidad del cliente';
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Desconformidad del cliente';
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Ausente';
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Datos erróneos';
+
+/* reemplazar los antiguos con los nuevos
+
+UPDATE formulario
+SET motivo_cierre = 'Conformidad del cliente'
+WHERE motivo_cierre = 'Conformidad de cliente';
+
+UPDATE formulario
+SET motivo_cierre = 'Varios / otros'
+WHERE motivo_cierre = 'Evento fuera de norma'; */
