@@ -21,7 +21,15 @@ export const signupSchema = z.object({
     }).min(2, {
         message: 'La contraseña debe tener al menos 2 caracteres'
     }).max(255),
-    rol: z.enum(["admin", "tecnico"]).optional()
+    rol: z.enum(["admin", "tecnico"]).optional(),
+    telefono: z.string({
+        required_error: 'El teléfono es requerido',
+        invalid_type_error: 'El teléfono debe ser un texto'
+      })
+      .regex(/^\d{8,20}$/, {
+        message: 'El teléfono debe contener solo números y tener entre 8 y 20 dígitos'
+      }),
+      
 })
 
 export const signinSchema = z.object({

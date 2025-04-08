@@ -4,7 +4,13 @@ import { useNavigate } from "react-router-dom";
 
 function TecnicosAdmin() {
   const [tecnicos, setTecnicos] = useState([]);
-  const [nuevo, setNuevo] = useState({ nombre: "", email: "", password: "" });
+  const [nuevo, setNuevo] = useState({
+    id_tecnico: "",
+    nombre: "",
+    email: "",
+    password: "",
+    telefono: "",
+  });
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
 
@@ -53,7 +59,7 @@ function TecnicosAdmin() {
         ...prev,
       ]);
 
-      setNuevo({ id_tecnico: "", nombre: "", email: "", password: "" });
+      setNuevo({ id_tecnico: "", nombre: "", email: "", password: "", telefono: "" });
     } catch (error) {
       const mensaje = error.response?.data?.message || "Error del servidor";
       setErrorMsg(mensaje);
@@ -130,6 +136,13 @@ function TecnicosAdmin() {
             placeholder="Contraseña"
             value={nuevo.password}
             onChange={(e) => setNuevo({ ...nuevo, password: e.target.value })}
+            required
+          />
+          <input
+            type="tel"
+            placeholder="Teléfono"
+            value={nuevo.telefono}
+            onChange={(e) => setNuevo({ ...nuevo, telefono: e.target.value })}
             required
           />
           <button type="submit" className="btn btn-primary">

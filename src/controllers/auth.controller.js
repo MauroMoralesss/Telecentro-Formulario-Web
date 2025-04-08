@@ -5,9 +5,10 @@ import { createAccessToken } from "../libs/jwt.js";
 export const signin = async (req, res) => {
   const { id_tecnico, password } = req.body;
 
-  const result = await pool.query("SELECT * FROM tecnicos WHERE id_tecnico = $1", [
-    id_tecnico,
-  ]);
+  const result = await pool.query(
+    "SELECT * FROM tecnicos WHERE id_tecnico = $1",
+    [id_tecnico]
+  );
 
   if (result.rowCount === 0) {
     return res.status(400).json({
@@ -32,7 +33,10 @@ export const signin = async (req, res) => {
     });
   }
 
-  const token = await createAccessToken({ id: tecnico.id_tecnico, rol: tecnico.rol });
+  const token = await createAccessToken({
+    id: tecnico.id_tecnico,
+    rol: tecnico.rol,
+  });
 
   res.cookie("token", token, {
     httpOnly: true,
@@ -49,9 +53,9 @@ export const signin = async (req, res) => {
   });
 };
 
-
 export const signup = async (req, res) => {
-  const { id_tecnico, nombre, email, password, rol, activo } = req.body;
+  const { id_tecnico, nombre, email, password, rol, activo, telefono } =
+    req.body;
 
   try {
     const existeId = await pool.query(
@@ -70,11 +74,17 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "El correo ya está registrado" });
     }
 
+    if (!/^\d{8,20}$/.test(telefono)) {
+      return res.status(400).json({
+        message:
+          "El teléfono debe contener solo números y tener entre 8 y 20 dígitos",
+      });
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
 
     await pool.query(
-      "INSERT INTO tecnicos (id_tecnico, nombre, email, password, rol, activo) VALUES ($1, $2, $3, $4, $5, $6)",
-      [id_tecnico, nombre, email, hashedPassword, rol, activo]
+      "INSERT INTO tecnicos (id_tecnico, nombre, email, password, rol, activo, telefono) VALUES ($1, $2, $3, $4, $5, $6, $7)",
+      [id_tecnico, nombre, email, hashedPassword, rol, activo, telefono]
     );
 
     res.status(201).json({ message: "Técnico registrado correctamente" });
@@ -84,15 +94,15 @@ export const signup = async (req, res) => {
   }
 };
 
-
 export const signout = (req, res) => {
   res.clearCookie("token");
   res.sendStatus(200);
 };
 
 export const profile = async (req, res) => {
-  const result = await pool.query("SELECT * FROM tecnicos WHERE id_tecnico = $1", [
-    req.userId,
-  ]);
+  const result = await pool.query(
+    "SELECT * FROM tecnicos WHERE id_tecnico = $1",
+    [req.userId]
+  );
   return res.json(result.rows[0]);
 };
