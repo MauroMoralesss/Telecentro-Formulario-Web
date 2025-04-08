@@ -12,13 +12,21 @@ import { pool } from "./db.js";
 
 const app = express();
 
+const allowedOrigins = [
+  'https://magoo.solutions',
+  'https://www.magoo.solutions'
+];
+
 // Middlewares
-app.use(
-  cors({
-    origin: ORIGIN,
-    credentials: true,
-  })
-);
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true
+}));
 app.use(morgan("dev"));
 app.use(cookieParser());
 app.use(express.json());
