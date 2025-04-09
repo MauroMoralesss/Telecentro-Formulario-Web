@@ -57,27 +57,48 @@ export const listarDelTecnico = async (req, res) => {
 
 // Completar formulario (técnico) - usando url_archivo desde el frontend
 export const completar = async (req, res) => {
-  const formulario = await obtenerFormularioPorId(req.params.id);
+  try {
+    console.log("✅ Recibido PATCH /formularios/:id/completar");
+    console.log("➡️ ID del formulario:", req.params.id);
+    console.log("📦 Body recibido:", req.body);
 
-  if (!formulario) {
-    return res.status(404).json({ message: "Formulario no encontrado" });
-  }
+    const formulario = await obtenerFormularioPorId(req.params.id);
 
-  if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
-    return res.status(403).json({
-      message: "Este formulario no puede ser completado en su estado actual",
+    if (!formulario) {
+      console.warn("⚠️ Formulario no encontrado");
+      return res.status(404).json({ message: "Formulario no encontrado" });
+    }
+
+    if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
+      console.warn("❌ Estado inválido para completar:", formulario.estado);
+      return res.status(403).json({
+        message: "Este formulario no puede ser completado en su estado actual",
+      });
+    }
+
+    const { motivo_cierre, checklist, observaciones, url_archivo } = req.body;
+
+    console.log("🛠 Datos a actualizar:", {
+      motivo_cierre,
+      checklist,
+      observaciones,
+      url_archivo: url_archivo || null,
+      estado: "En revision",
     });
+
+    const actualizado = await actualizarFormulario(req.params.id, {
+      motivo_cierre,
+      checklist,
+      observaciones,
+      url_archivo: url_archivo || null,
+      estado: "En revision",
+    });
+
+    console.log("✅ Formulario actualizado correctamente");
+    res.json(actualizado);
+  } catch (error) {
+    console.error("🔥 Error en completar:", error);
+    res.status(500).json({ message: "Error al completar el formulario" });
   }
-
-  const { motivo_cierre, checklist, observaciones, url_archivo } = req.body;
-
-  const actualizado = await actualizarFormulario(req.params.id, {
-    motivo_cierre,
-    checklist,
-    observaciones,
-    url_archivo: url_archivo || null,
-    estado: "En revision",
-  });
-
-  res.json(actualizado);
 };
+

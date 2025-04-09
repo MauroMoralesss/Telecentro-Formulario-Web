@@ -155,11 +155,17 @@ function FormularioDetalle() {
         url_archivo: videoUrl,
       };
 
+      console.log(
+        "📡 Enviando PATCH a /formularios/:id/completar con:",
+        payload
+      );
+
       const res = await axios.patch(
         `/formularios/${formulario.id_formulario}/completar`,
         payload,
         {
           headers: { "Content-Type": "application/json" },
+          timeout: 120000,
         }
       );
 
