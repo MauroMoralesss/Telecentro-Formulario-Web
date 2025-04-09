@@ -10,6 +10,7 @@ function FormularioDetalle() {
   const [formulario, setFormulario] = useState(null);
   const [enviando, setEnviando] = useState(false);
   const [tecnico, setTecnico] = useState(null);
+  const [progreso, setProgreso] = useState(0);
 
   const opcionesChecklist = [
     "Cableado realizado correctamente",
@@ -26,6 +27,7 @@ function FormularioDetalle() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [alerta, setAlerta] = useState("");
   const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [tiempoInicio, setTiempoInicio] = useState(null);
 
   const { usuario } = useAuth();
 
@@ -46,6 +48,68 @@ function FormularioDetalle() {
     fetchForm();
   }, [id]);
 
+  const uploadVideoToCloudinary = async (file) => {
+    setTiempoInicio(Date.now());
+    return new Promise((resolve, reject) => {
+      const url = "https://api.cloudinary.com/v1_1/dfe8vpoxs/video/upload";
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", "formulario_directo");
+      formData.append("folder", "formularios");
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", url);
+
+      // ✅ Movemos esto adentro del bloque donde se define `percent`
+      xhr.upload.addEventListener("progress", (event) => {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded * 100) / event.total);
+          setProgreso(percent);
+
+          // Estimación de tiempo restante (opcional)
+          const tiempoActual = Date.now();
+          const tiempoTranscurrido = (tiempoActual - tiempoInicio) / 1000; // segundos
+
+          if (percent > 0) {
+            const estimadoTotal = tiempoTranscurrido / (percent / 100);
+            const estimadoRestante = estimadoTotal - tiempoTranscurrido;
+
+            console.log(
+              `⏳ Estimado restante: ${Math.round(estimadoRestante)}s`
+            );
+            // Podés guardar en un estado si querés mostrarlo:
+            // setTiempoRestante(Math.round(estimadoRestante));
+          }
+        }
+      });
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === XMLHttpRequest.DONE) {
+          if (xhr.status === 200) {
+            const response = JSON.parse(xhr.responseText);
+            resolve(response.secure_url);
+          } else {
+            try {
+              const error = JSON.parse(xhr.responseText);
+              console.error("Cloudinary error:", error);
+              reject(
+                new Error(error.error?.message || "Error al subir a Cloudinary")
+              );
+            } catch (err) {
+              reject(new Error("Error desconocido al subir a Cloudinary"));
+            }
+          }
+        }
+      };
+
+      xhr.onerror = () => {
+        reject(new Error("Error de red al subir a Cloudinary"));
+      };
+
+      xhr.send(formData);
+    });
+  };
+
   if (!formulario) return <p>Cargando formulario...</p>;
 
   const cambiarEstado = async (nuevoEstado, motivo = "") => {
@@ -59,6 +123,11 @@ function FormularioDetalle() {
         { withCredentials: true }
       );
       setFormulario(res.data);
+      setSeleccionados([]);
+      setMotivoCierre("");
+      setObservaciones("");
+      setArchivo(null);
+      setPreviewUrl(null);
     } catch (err) {
       console.error("Error al cambiar estado", err);
     }
@@ -66,30 +135,34 @@ function FormularioDetalle() {
 
   const enviarFormulario = async (e) => {
     e.preventDefault();
-    if (enviando) return;
-
-    if (!archivo) {
-      setAlerta("❌ Debe adjuntar un archivo antes de enviar el formulario.");
-      setTimeout(() => setAlerta(""), 4000);
-      return;
-    }
+    if (enviando || !archivo) return;
 
     setEnviando(true);
-    setAlerta("");
-    const formData = new FormData();
-    formData.append("motivo_cierre", motivoCierre);
-    formData.append("checklist", seleccionados.join(", "));
-    formData.append("observaciones", observaciones);
-    formData.append("archivo", archivo);
+    setAlerta("⏳ Subiendo video...");
 
     try {
+      setAlerta("⏳ Subiendo video...");
+      const videoUrl = await uploadVideoToCloudinary(archivo);
+
+      // Mostramos la alerta de éxito por al menos 1 segundo
+      setAlerta("✅ Video subido correctamente. ⏳ Enviando formulario...");
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+
+      const payload = {
+        motivo_cierre: motivoCierre,
+        checklist: seleccionados.join(", "),
+        observaciones,
+        url_archivo: videoUrl,
+      };
+
       const res = await axios.patch(
         `/formularios/${formulario.id_formulario}/completar`,
-        formData,
+        payload,
         {
-          headers: { "Content-Type": "multipart/form-data" },
+          headers: { "Content-Type": "application/json" },
         }
       );
+
       setFormulario(res.data);
       setAlerta("✅ Formulario enviado correctamente");
     } catch (error) {
@@ -98,6 +171,7 @@ function FormularioDetalle() {
     } finally {
       setEnviando(false);
       setTimeout(() => setAlerta(""), 4000);
+      setProgreso(0);
     }
   };
 
@@ -311,6 +385,7 @@ function FormularioDetalle() {
               type="file"
               accept="video/*"
               capture="environment"
+              disabled={enviando}
               onChange={(e) => {
                 const file = e.target.files[0];
                 setArchivo(file);
@@ -370,6 +445,29 @@ function FormularioDetalle() {
             >
               {enviando ? "Enviando..." : "Enviar formulario"}
             </button>
+            {enviando && progreso > 0 && (
+              <div style={{ marginTop: 10 }}>
+                <div
+                  style={{ height: 10, background: "#ddd", borderRadius: 4 }}
+                >
+                  <div
+                    style={{
+                      width: `${progreso}%`,
+                      height: "100%",
+                      background: "#3b82f6",
+                      borderRadius: 4,
+                    }}
+                  ></div>
+                </div>
+                <p style={{ fontSize: 12, marginTop: 4 }}>{progreso}% subido</p>
+                {progreso > 0 && progreso < 100 && (
+                  <p style={{ fontSize: 12, color: "#555" }}>
+                    Tiempo restante estimado: ~
+                    {Math.round((100 - progreso) / 2)}s
+                  </p>
+                )}
+              </div>
+            )}
           </form>
         )}
 

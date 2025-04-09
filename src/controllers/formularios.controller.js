@@ -55,9 +55,13 @@ export const listarDelTecnico = async (req, res) => {
   res.json(formularios);
 };
 
-// Completar formulario (técnico)
+// Completar formulario (técnico) - usando url_archivo desde el frontend
 export const completar = async (req, res) => {
   const formulario = await obtenerFormularioPorId(req.params.id);
+
+  if (!formulario) {
+    return res.status(404).json({ message: "Formulario no encontrado" });
+  }
 
   if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
     return res.status(403).json({
@@ -65,18 +69,13 @@ export const completar = async (req, res) => {
     });
   }
 
-  if (!formulario) {
-    return res.status(404).json({ message: "Formulario no encontrado" });
-  }
-
-  const { motivo_cierre, checklist, observaciones } = req.body;
-  const url_archivo = req.file?.path || null;
+  const { motivo_cierre, checklist, observaciones, url_archivo } = req.body;
 
   const actualizado = await actualizarFormulario(req.params.id, {
     motivo_cierre,
     checklist,
     observaciones,
-    url_archivo,
+    url_archivo: url_archivo || null,
     estado: "En revision",
   });
 

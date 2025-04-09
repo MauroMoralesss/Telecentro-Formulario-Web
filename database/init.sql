@@ -65,3 +65,5 @@ WHERE motivo_cierre = 'Evento fuera de norma'; */
 
 ALTER TABLE formulario ADD COLUMN motivo_rechazo TEXT;
 ALTER TABLE formulario ADD COLUMN fecha_modificacion TIMESTAMP;
+
+ALTER TABLE tecnicos ADD COLUMN telefono VARCHAR(20);

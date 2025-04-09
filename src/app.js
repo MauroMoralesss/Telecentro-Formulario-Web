@@ -14,7 +14,8 @@ const app = express();
 
 const allowedOrigins = [
   'https://magoo.solutions',
-  'https://www.magoo.solutions'
+  'https://www.magoo.solutions',
+  'http://localhost:5173'
 ];
 
 // Middlewares
