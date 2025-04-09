@@ -57,9 +57,25 @@ function FormularioCard({ form }) {
         <strong>Formulario #{form.id_formulario}</strong>
       </h3>
 
-      <p><strong>Técnico ID:</strong> {form.tecnico_id}</p>
-      <p><strong>Orden:</strong> {form.nro_orden}</p>
-      <p><strong>Cliente:</strong> {form.nro_cliente}</p>
+      <p>
+        <strong>Técnico ID:</strong> {form.tecnico_id}
+      </p>
+      <p>
+        <strong>Orden:</strong> {form.nro_orden}
+      </p>
+      <p>
+        <strong>Cliente:</strong> {form.nro_cliente}
+      </p>
+      <p>
+        <strong>Nombre:</strong> {form.nombre}
+      </p>
+      <p>
+        <strong>Domicilio:</strong> {form.domicilio}
+      </p>
+      <p>
+        <strong>Teléfono:</strong> {form.telefono}
+      </p>
+
       <p>
         <strong>Estado:</strong>{" "}
         <span style={{ color: estadoColor[estado] || "#000" }}>

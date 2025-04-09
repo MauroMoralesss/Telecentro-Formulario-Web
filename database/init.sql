@@ -67,3 +67,12 @@ ALTER TABLE formulario ADD COLUMN motivo_rechazo TEXT;
 ALTER TABLE formulario ADD COLUMN fecha_modificacion TIMESTAMP;
 
 ALTER TABLE tecnicos ADD COLUMN telefono VARCHAR(20);
+
+ALTER TABLE formulario
+RENAME COLUMN abonado TO nombre;
+
+ALTER TABLE formulario
+RENAME COLUMN vt TO domicilio;
+
+ALTER TABLE formulario
+ADD COLUMN telefono VARCHAR(20);

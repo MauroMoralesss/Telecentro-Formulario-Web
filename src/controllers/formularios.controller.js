@@ -6,10 +6,22 @@ import {
   obtenerFormulariosPorTecnico,
 } from "../models/formularios.model.js";
 
+import { cloudinary } from "../libs/cloudinary.js"; // asegurate de importar 'cloudinary', no 'uploader'
+import fs from "fs/promises";
+import path from "path";
+import { exec } from "child_process";
+import { promisify } from "util";
+const execAsync = promisify(exec);
+
 // Crear formulario (admin)
 export const crear = async (req, res) => {
-  const formulario = await crearFormulario(req.body);
-  res.status(201).json(formulario);
+  try {
+    const formulario = await crearFormulario(req.body);
+    res.status(201).json(formulario);
+  } catch (error) {
+    console.error("Error al crear formulario:", error.message);
+    res.status(500).json({ error: "Error al crear formulario" });
+  }
 };
 
 // Ver todos los formularios (admin)
@@ -55,50 +67,64 @@ export const listarDelTecnico = async (req, res) => {
   res.json(formularios);
 };
 
-// Completar formulario (técnico) - usando url_archivo desde el frontend
+// Completar formulario (técnico) con compresión previa con FFmpeg
 export const completar = async (req, res) => {
   try {
-    console.log("✅ Recibido PATCH /formularios/:id/completar");
-    console.log("➡️ ID del formulario:", req.params.id);
-    console.log("📦 Body recibido:", req.body);
-
     const formulario = await obtenerFormularioPorId(req.params.id);
 
     if (!formulario) {
-      console.warn("⚠️ Formulario no encontrado");
       return res.status(404).json({ message: "Formulario no encontrado" });
     }
 
     if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
-      console.warn("❌ Estado inválido para completar:", formulario.estado);
       return res.status(403).json({
         message: "Este formulario no puede ser completado en su estado actual",
       });
     }
 
-    const { motivo_cierre, checklist, observaciones, url_archivo } = req.body;
+    let videoUrl = null;
 
-    console.log("🛠 Datos a actualizar:", {
-      motivo_cierre,
-      checklist,
-      observaciones,
-      url_archivo: url_archivo || null,
-      estado: "En revision",
-    });
+    if (req.file) {
+      const inputPath = req.file.path;
+      const outputPath = inputPath.replace(/\.mp4$/, "-compressed.mp4");
+
+      console.log("🎬 Ruta del video original:", inputPath);
+
+      try {
+        await execAsync(
+          `ffmpeg -i "${inputPath}" -vcodec libx264 -crf 28 "${outputPath}"`
+        );
+        console.log("✅ Video comprimido:", outputPath);
+
+        const result = await cloudinary.uploader.upload(outputPath, {
+          resource_type: "video",
+          folder: "formularios",
+        });
+
+        videoUrl = result.secure_url;
+
+        // 🧹 Limpieza
+        await fs.unlink(inputPath);
+        await fs.unlink(outputPath);
+      } catch (err) {
+        console.error("🔥 Error en compresión/subida:", err);
+        return res.status(500).json({ message: "Error al procesar el video" });
+      }
+    }
+
+    const { motivo_cierre, checklist, observaciones } = req.body;
 
     const actualizado = await actualizarFormulario(req.params.id, {
       motivo_cierre,
       checklist,
       observaciones,
-      url_archivo: url_archivo || null,
+      url_archivo: videoUrl,
       estado: "En revision",
     });
 
-    console.log("✅ Formulario actualizado correctamente");
     res.json(actualizado);
   } catch (error) {
-    console.error("🔥 Error en completar:", error);
+    console.error("🔥 Error al completar:", error);
     res.status(500).json({ message: "Error al completar el formulario" });
   }
 };
-

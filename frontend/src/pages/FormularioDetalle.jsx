@@ -27,7 +27,6 @@ function FormularioDetalle() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [alerta, setAlerta] = useState("");
   const [motivoRechazo, setMotivoRechazo] = useState("");
-  const [tiempoInicio, setTiempoInicio] = useState(null);
 
   const { usuario } = useAuth();
 
@@ -47,68 +46,6 @@ function FormularioDetalle() {
     };
     fetchForm();
   }, [id]);
-
-  const uploadVideoToCloudinary = async (file) => {
-    setTiempoInicio(Date.now());
-    return new Promise((resolve, reject) => {
-      const url = "https://api.cloudinary.com/v1_1/dfe8vpoxs/video/upload";
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", "formulario_directo");
-      formData.append("folder", "formularios");
-
-      const xhr = new XMLHttpRequest();
-      xhr.open("POST", url);
-
-      // ✅ Movemos esto adentro del bloque donde se define `percent`
-      xhr.upload.addEventListener("progress", (event) => {
-        if (event.lengthComputable) {
-          const percent = Math.round((event.loaded * 100) / event.total);
-          setProgreso(percent);
-
-          // Estimación de tiempo restante (opcional)
-          const tiempoActual = Date.now();
-          const tiempoTranscurrido = (tiempoActual - tiempoInicio) / 1000; // segundos
-
-          if (percent > 0) {
-            const estimadoTotal = tiempoTranscurrido / (percent / 100);
-            const estimadoRestante = estimadoTotal - tiempoTranscurrido;
-
-            console.log(
-              `⏳ Estimado restante: ${Math.round(estimadoRestante)}s`
-            );
-            // Podés guardar en un estado si querés mostrarlo:
-            // setTiempoRestante(Math.round(estimadoRestante));
-          }
-        }
-      });
-
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === XMLHttpRequest.DONE) {
-          if (xhr.status === 200) {
-            const response = JSON.parse(xhr.responseText);
-            resolve(response.secure_url);
-          } else {
-            try {
-              const error = JSON.parse(xhr.responseText);
-              console.error("Cloudinary error:", error);
-              reject(
-                new Error(error.error?.message || "Error al subir a Cloudinary")
-              );
-            } catch (err) {
-              reject(new Error("Error desconocido al subir a Cloudinary"));
-            }
-          }
-        }
-      };
-
-      xhr.onerror = () => {
-        reject(new Error("Error de red al subir a Cloudinary"));
-      };
-
-      xhr.send(formData);
-    });
-  };
 
   if (!formulario) return <p>Cargando formulario...</p>;
 
@@ -139,38 +76,53 @@ function FormularioDetalle() {
 
     setEnviando(true);
     setAlerta("⏳ Subiendo video...");
+    setProgreso(1);
 
     try {
-      setAlerta("⏳ Subiendo video...");
-      const videoUrl = await uploadVideoToCloudinary(archivo);
-
-      // Mostramos la alerta de éxito por al menos 1 segundo
-      setAlerta("✅ Video subido correctamente. ⏳ Enviando formulario...");
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      const payload = {
-        motivo_cierre: motivoCierre,
-        checklist: seleccionados.join(", "),
-        observaciones,
-        url_archivo: videoUrl,
-      };
-
-      console.log(
-        "📡 Enviando PATCH a /formularios/:id/completar con:",
-        payload
-      );
+      const formData = new FormData();
+      formData.append("archivo", archivo);
+      formData.append("motivo_cierre", motivoCierre);
+      formData.append("checklist", seleccionados.join(", "));
+      formData.append("observaciones", observaciones);
 
       const res = await axios.patch(
         `/formularios/${formulario.id_formulario}/completar`,
-        payload,
+        formData,
         {
-          headers: { "Content-Type": "application/json" },
-          timeout: 120000,
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+          timeout: 10 * 60 * 1000,
+          onUploadProgress: (event) => {
+            if (event.lengthComputable) {
+              let percent = Math.round((event.loaded * 100) / event.total);
+              if (percent >= 100) percent = 99;
+              setProgreso(percent);
+
+              if (percent === 99) {
+                setAlerta("✅ Video subido. ⏳ Procesando en el servidor...");
+              }
+            }
+          },
         }
       );
 
+      setProgreso(100);
+      setAlerta(
+        "✅ Video comprimido y subido correctamente. Guardando datos..."
+      );
+      await new Promise((r) => setTimeout(r, 1000));
+
       setFormulario(res.data);
       setAlerta("✅ Formulario enviado correctamente");
+      setPreviewUrl(null);
+
+      setTimeout(() => {
+        setSeleccionados([]);
+        setMotivoCierre("");
+        setObservaciones("");
+        setArchivo(null);
+      }, 1000);
     } catch (error) {
       console.error("Error al completar formulario", error);
       setAlerta("❌ Error al enviar el formulario");
@@ -200,10 +152,13 @@ function FormularioDetalle() {
             <strong>Cliente:</strong> {formulario.nro_cliente}
           </p>
           <p>
-            <strong>Abonado:</strong> {formulario.abonado}
+            <strong>Nombre:</strong> {formulario.nombre}
           </p>
           <p>
-            <strong>Velocidad:</strong> {formulario.vt}
+            <strong>Domicilio:</strong> {formulario.domicilio}
+          </p>
+          <p>
+            <strong>Teléfono:</strong> {formulario.telefono}
           </p>
           <p>
             <strong>Estado:</strong>{" "}
@@ -213,8 +168,14 @@ function FormularioDetalle() {
           </p>
           <p>
             <strong>Fecha de creación:</strong>{" "}
-            {new Date(formulario.fecha_creacion).toLocaleString()}
+            {new Date(formulario.fecha_creacion).toLocaleString("es-AR")}
           </p>
+          {usuario?.rol === "admin" && formulario.fecha_modificacion && (
+            <p>
+              <strong>Última modificación:</strong>{" "}
+              {new Date(formulario.fecha_modificacion).toLocaleString("es-AR")}
+            </p>
+          )}
         </div>
 
         <hr style={{ margin: "12px 0" }} />
@@ -260,7 +221,11 @@ function FormularioDetalle() {
                     style={{ maxWidth: "100%", borderRadius: 6 }}
                   />
                 ) : formulario.url_archivo.match(/\.(mp4|webm)$/i) ? (
-                  <video controls style={{ maxWidth: "100%", borderRadius: 6 }}>
+                  <video
+                    controls
+                    style={{ maxWidth: "100%", borderRadius: 6 }}
+                    referrerPolicy="no-referrer"
+                  >
                     <source src={formulario.url_archivo} type="video/mp4" />
                     Tu navegador no soporta este formato.
                   </video>
@@ -449,8 +414,15 @@ function FormularioDetalle() {
               disabled={enviando}
               style={{ marginTop: 10 }}
             >
-              {enviando ? "Enviando..." : "Enviar formulario"}
+              {enviando ? (
+                <>
+                  <span className="spinner" /> Enviando...
+                </>
+              ) : (
+                "Enviar formulario"
+              )}
             </button>
+
             {enviando && progreso > 0 && (
               <div style={{ marginTop: 10 }}>
                 <div
@@ -472,6 +444,12 @@ function FormularioDetalle() {
                     {Math.round((100 - progreso) / 2)}s
                   </p>
                 )}
+              </div>
+            )}
+            {enviando && progreso === 99 && (
+              <div style={{ marginTop: 10, fontSize: 12, color: "#555" }}>
+                <span className="spinner" style={{ marginRight: 5 }} />
+                Procesando en el servidor...
               </div>
             )}
           </form>

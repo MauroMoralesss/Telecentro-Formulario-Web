@@ -9,8 +9,9 @@ function CrearFormulario() {
     tecnico_id: "",
     nro_orden: "",
     nro_cliente: "",
-    abonado: "",
-    vt: "",
+    nombre: "",
+    domicilio: "",
+    telefono: "",
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -77,11 +78,21 @@ function CrearFormulario() {
         <label>Nro Cliente:</label>
         <input name="nro_cliente" onChange={handleChange} required />
 
-        <label>Abonado:</label>
-        <input name="abonado" onChange={handleChange} required />
+        <label>Nombre:</label>
+        <input name="nombre" onChange={handleChange} required />
 
-        <label>Vt:</label>
-        <input name="vt" onChange={handleChange} required />
+        <label>Domicilio:</label>
+        <input name="domicilio" onChange={handleChange} required />
+
+        <label>Teléfono:</label>
+        <input
+          name="telefono"
+          type="tel"
+          onChange={handleChange}
+          required
+          pattern="[0-9]{8,20}"
+          title="Solo números entre 8 y 20 dígitos"
+        />
 
         <button type="submit" className="btn btn-primary" style={{ marginTop: 12 }}>
           Crear

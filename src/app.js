@@ -1,4 +1,5 @@
 import express from "express";
+import timeout from "connect-timeout";
 import morgan from "morgan";
 import cookieParser from "cookie-parser";
 import cors from "cors";
@@ -12,26 +13,35 @@ import { pool } from "./db.js";
 
 const app = express();
 
+// ⏱ Timeout + límites de payload
+app.use(timeout("10m")); // Hasta 10 minutos de espera para requests lentos
+// Si la solicitud se canceló por timeout, no continuar
+app.use((req, res, next) => {
+  if (!req.timedout) next();
+});
+app.use(express.json({ limit: "500mb" }));
+app.use(express.urlencoded({ extended: true, limit: "500mb" }));
+
 const allowedOrigins = [
-  'https://magoo.solutions',
-  'https://www.magoo.solutions',
-  'http://localhost:5173'
+  "https://magoo.solutions",
+  "https://www.magoo.solutions",
+  "http://localhost:5173",
 ];
 
 // Middlewares
-app.use(cors({
-  origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    }
-    return callback(new Error('Not allowed by CORS'));
-  },
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      return callback(new Error("Not allowed by CORS"));
+    },
+    credentials: true,
+  })
+);
 app.use(morgan("dev"));
 app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
 
 // Routes
 app.get("/", (req, res) => res.json({ message: "bienvenido a mi API" }));
@@ -43,7 +53,7 @@ app.use("/api", authRoutes);
 app.use("/api", formulariosRoutes);
 app.use("/api", tecnicosRoutes);
 
-// Error Hander
+// Error Handler
 app.use((err, req, res, next) => {
   res.status(500).json({
     status: "error",

@@ -23,6 +23,7 @@ function TecnicoPerfil() {
         <p><strong>ID:</strong> {tecnico.id_tecnico}</p>
         <p><strong>Nombre:</strong> {tecnico.nombre}</p>
         <p><strong>Email:</strong> {tecnico.email}</p>
+        <p><strong>Telefono:</strong> {tecnico.telefono}</p>
         <p><strong>Rol:</strong> {tecnico.rol}</p>
         <p>
           <strong>Activo:</strong>{" "}
