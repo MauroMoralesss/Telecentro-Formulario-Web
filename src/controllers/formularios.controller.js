@@ -91,9 +91,12 @@ export const completar = async (req, res) => {
       console.log("🎬 Ruta del video original:", inputPath);
 
       try {
+        const start = Date.now();
         await execAsync(
-          `ffmpeg -i "${inputPath}" -vcodec libx264 -crf 28 "${outputPath}"`
+          `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
         );
+        const end = Date.now();
+        console.log(`⏱️ Tiempo de compresión: ${(end - start) / 1000}s`);
         console.log("✅ Video comprimido:", outputPath);
 
         const result = await cloudinary.uploader.upload(outputPath, {
