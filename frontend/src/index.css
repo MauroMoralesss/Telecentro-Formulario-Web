@@ -154,8 +154,13 @@ a:hover {
   font-weight: bold;
 }
 
-.estado-revision {
+.estado-en-revision {
   color: #0277bd;
+  font-weight: bold;
+}
+
+.estado-visto-sin-validar {
+  color: #f1c40f;
   font-weight: bold;
 }
 
@@ -383,6 +388,20 @@ input {
   background-color: #27ae60;
 }
 
+.btn-amarillo {
+  background-color: #f1c40f;
+  color: white;
+  font-weight: bold;
+  padding: 10px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn-amarillo:hover {
+  background-color: #d4ac0c;
+}
+
 /* Formularios detalle */
 .detalle-formulario {
   max-width: 1000px;
@@ -415,9 +434,11 @@ input {
   margin-top: 8px;
 }
 
+
 .estado-aprobado { color: green; font-weight: bold; }
 .estado-rechazado { color: red; font-weight: bold; }
 .estado-en\ revision { color: #007bff; font-weight: bold; }
+.estado-iniciado { color: #377771; font-weight: bold; }
 
 .alert-warning {
   color: #856404;
@@ -545,4 +566,23 @@ input[type="checkbox"] {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.servicios-lista {
+  list-style: none;
+  padding-left: 1.2rem; /* tabulación suave */
+  margin-top: 4px;
+}
+
+.servicios-lista li {
+  position: relative;
+  padding-left: 1.4rem;
+  margin-bottom: 4px;
+}
+
+.servicios-lista li::before {
+  content: "➤"; /* Podés usar: "✅", "➤", "👉", etc */
+  position: absolute;
+  left: 0;
+  color: #0277bd; /* Azul moderno */
 }

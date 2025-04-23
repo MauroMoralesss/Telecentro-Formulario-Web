@@ -101,6 +101,7 @@ function Dashboard() {
           <option value="Iniciado">Iniciado</option>
           <option value="En revision">En revisión</option>
           <option value="Aprobado">Aprobado</option>
+          <option value="Visto sin validar">Visto sin validar</option>
           <option value="Rechazado">Rechazado</option>
         </select>
       </div>

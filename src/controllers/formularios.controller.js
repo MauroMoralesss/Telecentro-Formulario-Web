@@ -6,9 +6,9 @@ import {
   obtenerFormulariosPorTecnico,
 } from "../models/formularios.model.js";
 
-import { cloudinary } from "../libs/cloudinary.js"; // asegurate de importar 'cloudinary', no 'uploader'
-import fs from "fs/promises";
+import { cloudinary } from "../libs/cloudinary.js";
 import path from "path";
+import fs from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
 const execAsync = promisify(exec);
@@ -49,7 +49,7 @@ export const cambiarEstado = async (req, res) => {
   const { id } = req.params;
   const { estado, motivo_rechazo } = req.body;
 
-  if (!["Aprobado", "Rechazado"].includes(estado)) {
+  if (!["Aprobado", "Rechazado", "Visto sin validar"].includes(estado)) {
     return res.status(400).json({ message: "Estado inválido" });
   }
 
@@ -82,37 +82,45 @@ export const completar = async (req, res) => {
       });
     }
 
-    let videoUrl = null;
+    const files = req.files;
+    let url_interior = null;
+    let url_exterior = null;
 
-    if (req.file) {
-      const inputPath = req.file.path;
-      const outputPath = inputPath.replace(/\.mp4$/, "-compressed.mp4");
+    const procesarVideo = async (archivo, tipo) => {
+      const inputPath = archivo.path;
+      const outputPath = inputPath.replace(/\.mp4$/, `-${tipo}-compressed.mp4`);
 
-      console.log("🎬 Ruta del video original:", inputPath);
+      console.log(`🎬 ${tipo}: Ruta original:`, inputPath);
 
-      try {
-        const start = Date.now();
-        await execAsync(
-          `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
-        );
-        const end = Date.now();
-        console.log(`⏱️ Tiempo de compresión: ${(end - start) / 1000}s`);
-        console.log("✅ Video comprimido:", outputPath);
+      await execAsync(
+        `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
+      );
 
-        const result = await cloudinary.uploader.upload(outputPath, {
-          resource_type: "video",
-          folder: "formularios",
-        });
+      console.log(`✅ ${tipo}: Comprimido:`, outputPath);
 
-        videoUrl = result.secure_url;
+      const result = await cloudinary.uploader.upload(outputPath, {
+        resource_type: "video",
+        folder: "formularios",
+      });
 
-        // 🧹 Limpieza
-        await fs.unlink(inputPath);
-        await fs.unlink(outputPath);
-      } catch (err) {
-        console.error("🔥 Error en compresión/subida:", err);
-        return res.status(500).json({ message: "Error al procesar el video" });
+      // 🧹 Limpieza
+      await fs.unlink(inputPath);
+      await fs.unlink(outputPath);
+
+      return result.secure_url;
+    };
+
+    try {
+      if (files?.video_interior) {
+        url_interior = await procesarVideo(files.video_interior[0], "interior");
       }
+
+      if (files?.video_exterior) {
+        url_exterior = await procesarVideo(files.video_exterior[0], "exterior");
+      }
+    } catch (err) {
+      console.error("🔥 Error en compresión/subida:", err);
+      return res.status(500).json({ message: "Error al procesar los videos" });
     }
 
     const { motivo_cierre, checklist, observaciones } = req.body;
@@ -121,7 +129,8 @@ export const completar = async (req, res) => {
       motivo_cierre,
       checklist,
       observaciones,
-      url_archivo: videoUrl,
+      url_video_interior: url_interior,
+      url_video_exterior: url_exterior,
       estado: "En revision",
     });
 

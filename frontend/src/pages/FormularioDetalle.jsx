@@ -23,10 +23,13 @@ function FormularioDetalle() {
   const [seleccionados, setSeleccionados] = useState([]);
   const [motivoCierre, setMotivoCierre] = useState("");
   const [observaciones, setObservaciones] = useState("");
-  const [archivo, setArchivo] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [archivoInterior, setArchivoInterior] = useState(null);
+  const [archivoExterior, setArchivoExterior] = useState(null);
+  const [previewInterior, setPreviewInterior] = useState(null);
+  const [previewExterior, setPreviewExterior] = useState(null);
   const [alerta, setAlerta] = useState("");
   const [motivoRechazo, setMotivoRechazo] = useState("");
+  const [estadoMsg, setEstadoMsg] = useState("");
 
   const { usuario } = useAuth();
 
@@ -63,8 +66,13 @@ function FormularioDetalle() {
       setSeleccionados([]);
       setMotivoCierre("");
       setObservaciones("");
-      setArchivo(null);
-      setPreviewUrl(null);
+      setArchivoInterior(null);
+      setArchivoExterior(null);
+      setPreviewInterior(null);
+      setPreviewExterior(null);
+      setEstadoMsg(`✅ Estado cambiado a "${nuevoEstado}"`);
+
+      setTimeout(() => setEstadoMsg(""), 3000);
     } catch (err) {
       console.error("Error al cambiar estado", err);
     }
@@ -72,15 +80,19 @@ function FormularioDetalle() {
 
   const enviarFormulario = async (e) => {
     e.preventDefault();
-    if (enviando || !archivo) return;
+    if (enviando || !archivoInterior || !archivoExterior) {
+      setAlerta("❌ Debes subir ambos videos: interior y exterior");
+      return;
+    }
 
     setEnviando(true);
-    setAlerta("⏳ Subiendo video...");
+    setAlerta("⏳ Subiendo ambos videos (interior y exterior)… 📤");
     setProgreso(1);
 
     try {
       const formData = new FormData();
-      formData.append("archivo", archivo);
+      if (archivoInterior) formData.append("video_interior", archivoInterior);
+      if (archivoExterior) formData.append("video_exterior", archivoExterior);
       formData.append("motivo_cierre", motivoCierre);
       formData.append("checklist", seleccionados.join(", "));
       formData.append("observaciones", observaciones);
@@ -100,7 +112,7 @@ function FormularioDetalle() {
               setProgreso(percent);
 
               if (percent === 99) {
-                setAlerta("✅ Video subido. ⏳ Procesando en el servidor...");
+                setAlerta("✅ Videos subidos. ⏳ Procesando en el servidor...");
               }
             }
           },
@@ -109,7 +121,7 @@ function FormularioDetalle() {
 
       setProgreso(100);
       setAlerta(
-        "✅ Video comprimido y subido correctamente. Guardando datos..."
+        "✅ Videos comprimidos y subidos correctamente. Guardando datos..."
       );
       await new Promise((r) => setTimeout(r, 1000));
 
@@ -121,7 +133,10 @@ function FormularioDetalle() {
         setSeleccionados([]);
         setMotivoCierre("");
         setObservaciones("");
-        setArchivo(null);
+        setArchivoInterior(null);
+        setArchivoExterior(null);
+        setPreviewInterior(null);
+        setPreviewExterior(null);
       }, 1000);
     } catch (error) {
       console.error("Error al completar formulario", error);
@@ -162,7 +177,11 @@ function FormularioDetalle() {
           </p>
           <p>
             <strong>Estado:</strong>{" "}
-            <span className={`estado-${formulario.estado.toLowerCase()}`}>
+            <span
+              className={`estado-${formulario.estado
+                .toLowerCase()
+                .replace(/\s+/g, "-")}`}
+            >
               {formulario.estado}
             </span>
           </p>
@@ -177,6 +196,21 @@ function FormularioDetalle() {
             </p>
           )}
         </div>
+        {formulario.servicios_instalar && (
+          <>
+            <p style={{ margin: "8px 0" }}>
+              <strong>Servicios a Instalar:</strong>
+            </p>
+            <ul className="servicios-lista">
+              {formulario.servicios_instalar
+                .split(/\r?\n/)
+                .filter((s) => s.trim() !== "")
+                .map((servicio, idx) => (
+                  <li key={idx}>{servicio}</li>
+                ))}
+            </ul>
+          </>
+        )}
 
         <hr style={{ margin: "12px 0" }} />
 
@@ -201,77 +235,130 @@ function FormularioDetalle() {
             )}
           </div>
 
-          {formulario.url_archivo && (
+          {formulario.url_video_interior && (
             <>
               <p>
-                <strong>Archivo:</strong>{" "}
+                <strong>Video Interior:</strong>{" "}
                 <a
-                  href={formulario.url_archivo}
+                  href={formulario.url_video_interior}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  Ver archivo
+                  Ver video
                 </a>
               </p>
               <div className="preview-archivo" style={{ marginTop: 10 }}>
-                {formulario.url_archivo.match(/\.(jpg|jpeg|png|gif)$/i) ? (
-                  <img
-                    src={formulario.url_archivo}
-                    alt="Vista previa"
-                    style={{ maxWidth: "100%", borderRadius: 6 }}
+                <video
+                  controls
+                  style={{ maxWidth: "100%", borderRadius: 6 }}
+                  referrerPolicy="no-referrer"
+                >
+                  <source
+                    src={formulario.url_video_interior}
+                    type="video/mp4"
                   />
-                ) : formulario.url_archivo.match(/\.(mp4|webm)$/i) ? (
-                  <video
-                    controls
-                    style={{ maxWidth: "100%", borderRadius: 6 }}
-                    referrerPolicy="no-referrer"
-                  >
-                    <source src={formulario.url_archivo} type="video/mp4" />
-                    Tu navegador no soporta este formato.
-                  </video>
-                ) : (
-                  <p>No se puede mostrar vista previa.</p>
-                )}
+                  Tu navegador no soporta este formato.
+                </video>
+              </div>
+            </>
+          )}
+
+          {formulario.url_video_exterior && (
+            <>
+              <p>
+                <strong>Video Exterior:</strong>{" "}
+                <a
+                  href={formulario.url_video_exterior}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Ver video
+                </a>
+              </p>
+              <div className="preview-archivo" style={{ marginTop: 10 }}>
+                <video
+                  controls
+                  style={{ maxWidth: "100%", borderRadius: 6 }}
+                  referrerPolicy="no-referrer"
+                >
+                  <source
+                    src={formulario.url_video_exterior}
+                    type="video/mp4"
+                  />
+                  Tu navegador no soporta este formato.
+                </video>
               </div>
             </>
           )}
         </div>
 
-        {usuario?.rol === "admin" && formulario.estado === "En revision" && (
-          <div
-            style={{
-              marginTop: 40,
-              border: "1px solid #ddd",
-              borderRadius: 10,
-              padding: 20,
-              backgroundColor: "#f9f9f9",
-            }}
-          >
-            <h3 style={{ marginBottom: 20, color: "#2c3e50" }}>
-              🛠 Acciones del administrador
-            </h3>
+        {usuario?.rol === "admin" &&
+          ["En revision", "Visto sin validar"].includes(formulario.estado) && (
+            <div
+              style={{
+                marginTop: 40,
+                border: "1px solid #ddd",
+                borderRadius: 10,
+                padding: 20,
+                backgroundColor: "#f9f9f9",
+              }}
+            >
+              <h3 style={{ marginBottom: 20, color: "#2c3e50" }}>
+                🛠 Acciones del administrador
+                {estadoMsg && (
+                  <p className="alert-success" style={{ marginTop: 10 }}>
+                    {estadoMsg}
+                  </p>
+                )}
+              </h3>
 
-            <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
-              <button
-                onClick={() => cambiarEstado("Aprobado")}
-                className="btn btn-verde"
-                style={{
-                  flex: 1,
-                  minWidth: 200,
-                  padding: "12px",
-                  fontWeight: "bold",
-                  borderRadius: 6,
-                }}
-              >
-                ✅ Aprobar formulario
-              </button>
+              <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => cambiarEstado("Aprobado")}
+                  className="btn btn-verde"
+                  style={{
+                    flex: 1,
+                    minWidth: 200,
+                    padding: "12px",
+                    fontWeight: "bold",
+                    borderRadius: 6,
+                  }}
+                >
+                  ✅ Aprobar formulario
+                </button>
 
-              <div style={{ flex: 3 }}>
-                <input
-                  type="text"
-                  value={motivoRechazo}
-                  onChange={(e) => setMotivoRechazo(e.target.value)}
-                  placeholder="Ej: Faltan observaciones o archivo incorrecto"
+                <div style={{ flex: 3 }}>
+                  <input
+                    type="text"
+                    value={motivoRechazo}
+                    onChange={(e) => setMotivoRechazo(e.target.value)}
+                    placeholder="Ej: Faltan observaciones o archivo incorrecto"
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      borderRadius: 6,
+                      border: "1px solid #ccc",
+                      marginBottom: 10,
+                    }}
+                  />
+
+                  <button
+                    onClick={() => cambiarEstado("Rechazado", motivoRechazo)}
+                    disabled={!motivoRechazo}
+                    className="btn btn-rojo"
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      fontWeight: "bold",
+                      borderRadius: 6,
+                    }}
+                  >
+                    ❌ Rechazar formulario
+                  </button>
+                </div>
+                <button
+                  onClick={() => cambiarEstado("Visto sin validar")}
+                  className="btn btn-amarillo"
                   style={{
                     width: "100%",
                     padding: "12px",
@@ -279,25 +366,12 @@ function FormularioDetalle() {
                     border: "1px solid #ccc",
                     marginBottom: 10,
                   }}
-                />
-
-                <button
-                  onClick={() => cambiarEstado("Rechazado", motivoRechazo)}
-                  disabled={!motivoRechazo}
-                  className="btn btn-rojo"
-                  style={{
-                    width: "100%",
-                    padding: "12px",
-                    fontWeight: "bold",
-                    borderRadius: 6,
-                  }}
                 >
-                  ❌ Rechazar formulario
+                  🔄 Continuar a revisión
                 </button>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
         {usuario?.rol === "tecnico" && formulario.estado === "Rechazado" && (
           <div className="rechazo-alert">
@@ -351,7 +425,7 @@ function FormularioDetalle() {
               onChange={(e) => setObservaciones(e.target.value)}
             ></textarea>
 
-            <label>Archivo:</label>
+            <label>Video Interior:</label>
             <input
               type="file"
               accept="video/*"
@@ -359,18 +433,66 @@ function FormularioDetalle() {
               disabled={enviando}
               onChange={(e) => {
                 const file = e.target.files[0];
-                setArchivo(file);
-                setPreviewUrl(URL.createObjectURL(file));
+                setArchivoInterior(file);
+                setPreviewInterior(URL.createObjectURL(file));
               }}
             />
 
-            {previewUrl && (
+            {previewInterior && (
               <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
                 <p>
-                  <strong>Vista previa del video:</strong>
+                  <strong>Vista previa Interior:</strong>
                 </p>
                 <video
-                  src={previewUrl}
+                  src={previewInterior}
+                  controls
+                  width="100%"
+                  style={{ borderRadius: "8px", maxHeight: "300px" }}
+                />
+              </div>
+            )}
+
+            <label>Video Exterior:</label>
+            <input
+              type="file"
+              accept="video/*"
+              capture="environment"
+              disabled={enviando}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setArchivoExterior(file);
+                setPreviewExterior(URL.createObjectURL(file));
+              }}
+            />
+
+            <label>Motivo cierre:</label>
+            <select
+              value={motivoCierre}
+              onChange={(e) => setMotivoCierre(e.target.value)}
+              required
+            >
+              <option value="">Seleccionar...</option>
+              <option value="Instalacion ok">Instalacion ok</option>
+              <option value="Conformidad del cliente">
+                Conformidad del cliente
+              </option>
+              <option value="Desconformidad del cliente">
+                Desconformidad del cliente
+              </option>
+              <option value="Instalación cableada sin terminar">
+                Instalación cableada sin terminar
+              </option>
+              <option value="Datos erróneos">Datos erróneos</option>
+              <option value="Varios / otros">Varios / otros</option>
+            </select>
+
+            {previewExterior && (
+              <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                <p>
+                  <strong>Vista previa Exterior:</strong>
+                </p>
+                <video
+                  src={previewExterior}
                   controls
                   width="100%"
                   style={{ borderRadius: "8px", maxHeight: "300px" }}
@@ -388,25 +510,6 @@ function FormularioDetalle() {
                 {alerta}
               </div>
             )}
-
-            <label>Motivo cierre:</label>
-            <select
-              value={motivoCierre}
-              onChange={(e) => setMotivoCierre(e.target.value)}
-              required
-            >
-              <option value="">Seleccionar...</option>
-              <option value="Instalacion ok">Instalacion ok</option>
-              <option value="Conformidad del cliente">
-                Conformidad del cliente
-              </option>
-              <option value="Desconformidad del cliente">
-                Desconformidad del cliente
-              </option>
-              <option value="Ausente">Ausente</option>
-              <option value="Datos erróneos">Datos erróneos</option>
-              <option value="Varios / otros">Varios / otros</option>
-            </select>
 
             <button
               type="submit"

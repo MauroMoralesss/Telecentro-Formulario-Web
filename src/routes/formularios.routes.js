@@ -9,7 +9,7 @@ import {
   completar,
 } from "../controllers/formularios.controller.js";
 import { isAuth } from "../middlewares/auth.middleware.js";
-import { upload } from "../middlewares/upload.middleware.js";
+import { uploadMultiple } from "../middlewares/upload.middleware.js";
 
 const router = Router();
 
@@ -24,11 +24,6 @@ router.put("/formularios/:id", isAuth, editar);
 router.patch("/formularios/:id/estado", isAuth, cambiarEstado);
 
 // Técnico
-router.patch(
-  "/formularios/:id/completar",
-  isAuth,
-  upload.single("archivo"),
-  completar
-);
+router.patch("/formularios/:id/completar", isAuth, uploadMultiple, completar);
 
 export default router;

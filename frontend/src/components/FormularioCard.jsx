@@ -8,7 +8,8 @@ function FormularioCard({ form }) {
     Aprobado: "green",
     Rechazado: "red",
     "En revision": "#007bff",
-    Iniciado: "#ffa500",
+    Iniciado: "#377771",
+    "Visto sin validar": "#f1c40f",
   };
 
   const estadoLabel = {

@@ -14,4 +14,5 @@ export const crearFormularioSchema = z.object({
     message:
       "El teléfono debe contener solo números y tener entre 8 y 20 dígitos",
   }),
+  servicios_instalar: z.string().min(1, "Este campo es requerido"),
 });

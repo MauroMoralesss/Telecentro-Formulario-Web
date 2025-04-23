@@ -12,6 +12,7 @@ function CrearFormulario() {
     nombre: "",
     domicilio: "",
     telefono: "",
+    servicios_instalar: "",
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
@@ -53,6 +54,11 @@ function CrearFormulario() {
     }
   };
 
+  const autoResize = (e) => {
+    e.target.style.height = "auto"; // reset por si achica
+    e.target.style.height = `${e.target.scrollHeight}px`;
+  };
+
   return (
     <div style={{ maxWidth: 600, margin: "auto", padding: 20 }}>
       <h2 className="form-title">Crear nuevo formulario</h2>
@@ -64,9 +70,7 @@ function CrearFormulario() {
         <label>Técnico:</label>
         <Select
           options={opciones}
-          onChange={(opcion) =>
-            setForm({ ...form, tecnico_id: opcion.value })
-          }
+          onChange={(opcion) => setForm({ ...form, tecnico_id: opcion.value })}
           placeholder="Seleccionar técnico..."
           isSearchable
           styles={{ menu: (base) => ({ ...base, zIndex: 999 }) }}
@@ -93,8 +97,24 @@ function CrearFormulario() {
           pattern="[0-9]{8,20}"
           title="Solo números entre 8 y 20 dígitos"
         />
+        <label htmlFor="servicios_instalar">Servicios a Instalar:</label>
+        <textarea
+          name="servicios_instalar"
+          value={form.servicios_instalar}
+          onChange={(e) => {
+            handleChange(e);
+            autoResize(e);
+          }}
+          placeholder="Ej: ABONO TELEFONIA 75388999 (COMUN SITIO WEB)"
+          rows={1} // arranca con una fila mínima
+          style={{ overflow: "hidden", resize: "none" }}
+        />
 
-        <button type="submit" className="btn btn-primary" style={{ marginTop: 12 }}>
+        <button
+          type="submit"
+          className="btn btn-primary"
+          style={{ marginTop: 12 }}
+        >
           Crear
         </button>
       </form>

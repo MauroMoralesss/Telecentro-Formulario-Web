@@ -76,3 +76,11 @@ RENAME COLUMN vt TO domicilio;
 
 ALTER TABLE formulario
 ADD COLUMN telefono VARCHAR(20);
+
+ALTER TYPE estado_formulario ADD VALUE 'Visto sin validar';
+
+ALTER TABLE formulario
+ADD COLUMN url_video_interior TEXT,
+ADD COLUMN url_video_exterior TEXT;
+
+

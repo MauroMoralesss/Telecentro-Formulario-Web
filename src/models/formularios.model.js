@@ -6,13 +6,14 @@ export const crearFormulario = async ({
   nro_cliente,
   nombre,
   domicilio,
-  telefono
+  telefono,
+  servicios_instalar,
 }) => {
   const result = await pool.query(
     `INSERT INTO formulario (
-      tecnico_id, nro_orden, nro_cliente, nombre, domicilio, fecha_modificacion, telefono
-    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6) RETURNING *`,
-    [tecnico_id, nro_orden, nro_cliente, nombre, domicilio, telefono]
+      tecnico_id, nro_orden, nro_cliente, nombre, domicilio, fecha_modificacion, telefono, servicios_instalar
+    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7) RETURNING *`,
+    [tecnico_id, nro_orden, nro_cliente, nombre, domicilio, telefono, servicios_instalar]
   );
   return result.rows[0];
 };
