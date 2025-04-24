@@ -157,6 +157,10 @@ function FormularioDetalle() {
 
         <div className="info-grid">
           <p>
+            <strong>Técnico ID:</strong>{" "}
+            {formulario.tecnico_id}
+          </p>
+          <p>
             <strong>Técnico:</strong>{" "}
             {tecnico ? tecnico.nombre : `ID ${formulario.tecnico_id}`}
           </p>
@@ -465,6 +469,20 @@ function FormularioDetalle() {
               }}
             />
 
+            {previewExterior && (
+              <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                <p>
+                  <strong>Vista previa Exterior:</strong>
+                </p>
+                <video
+                  src={previewExterior}
+                  controls
+                  width="100%"
+                  style={{ borderRadius: "8px", maxHeight: "300px" }}
+                />
+              </div>
+            )}
+
             <label>Motivo cierre:</label>
             <select
               value={motivoCierre}
@@ -485,20 +503,6 @@ function FormularioDetalle() {
               <option value="Datos erróneos">Datos erróneos</option>
               <option value="Varios / otros">Varios / otros</option>
             </select>
-
-            {previewExterior && (
-              <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
-                <p>
-                  <strong>Vista previa Exterior:</strong>
-                </p>
-                <video
-                  src={previewExterior}
-                  controls
-                  width="100%"
-                  style={{ borderRadius: "8px", maxHeight: "300px" }}
-                />
-              </div>
-            )}
 
             {alerta && (
               <div
