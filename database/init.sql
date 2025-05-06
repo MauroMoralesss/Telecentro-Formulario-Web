@@ -83,4 +83,18 @@ ALTER TABLE formulario
 ADD COLUMN url_video_interior TEXT,
 ADD COLUMN url_video_exterior TEXT;
 
+ALTER TABLE formulario
+ADD COLUMN latitud DOUBLE PRECISION,
+ADD COLUMN longitud DOUBLE PRECISION;
 
+CREATE TABLE public.dispositivo (
+  id_dispositivo serial PRIMARY KEY,
+  formulario_id integer NOT NULL
+    REFERENCES public.formulario(id_formulario)
+    ON DELETE CASCADE,
+  tipo varchar(50)    NOT NULL,
+  mac  varchar(50)    NOT NULL,
+  UNIQUE (formulario_id)
+);
+
+ALTER TABLE dispositivo DROP CONSTRAINT dispositivo_formulario_id_key;

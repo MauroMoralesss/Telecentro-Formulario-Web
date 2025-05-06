@@ -6,6 +6,12 @@ import {
   obtenerFormulariosPorTecnico,
 } from "../models/formularios.model.js";
 
+import {
+  borrarDispositivosPorFormulario,
+  crearDispositivos,
+  obtenerDispositivosPorFormulario,
+} from "../models/dispositivo.model.js";
+
 import { cloudinary } from "../libs/cloudinary.js";
 import path from "path";
 import fs from "fs/promises";
@@ -32,10 +38,20 @@ export const listarTodos = async (req, res) => {
 
 // Ver formulario por ID
 export const obtener = async (req, res) => {
-  const formulario = await obtenerFormularioPorId(req.params.id);
-  if (!formulario)
-    return res.status(404).json({ message: "Formulario no encontrado" });
-  res.json(formulario);
+  try {
+    const formulario = await obtenerFormularioPorId(req.params.id);
+    if (!formulario)
+      return res.status(404).json({ message: "Formulario no encontrado" });
+
+    const dispositivos = await obtenerDispositivosPorFormulario(
+      formulario.id_formulario
+    );
+
+    return res.json({ ...formulario, dispositivos });
+  } catch (err) {
+    console.error("Error al obtener el formulario:", err);
+    return res.status(500).json({ message: "Error interno del servidor" });
+  }
 };
 
 // Actualizar campos generales (admin)
@@ -123,7 +139,16 @@ export const completar = async (req, res) => {
       return res.status(500).json({ message: "Error al procesar los videos" });
     }
 
-    const { motivo_cierre, checklist, observaciones } = req.body;
+    const dispositivosPayload = req.body.dispositivos
+      ? JSON.parse(req.body.dispositivos)
+      : [];
+
+    await borrarDispositivosPorFormulario(formulario.id_formulario);
+
+    await crearDispositivos(formulario.id_formulario, dispositivosPayload);
+
+    const { motivo_cierre, checklist, observaciones, latitud, longitud } =
+      req.body;
 
     const actualizado = await actualizarFormulario(req.params.id, {
       motivo_cierre,
@@ -132,9 +157,14 @@ export const completar = async (req, res) => {
       url_video_interior: url_interior,
       url_video_exterior: url_exterior,
       estado: "En revision",
+      ...(latitud != null && longitud != null ? { latitud, longitud } : {}),
     });
 
-    res.json(actualizado);
+    const dispositivos = await obtenerDispositivosPorFormulario(
+      formulario.id_formulario
+    );
+
+    return res.json({ ...actualizado, dispositivos });
   } catch (error) {
     console.error("🔥 Error al completar:", error);
     res.status(500).json({ message: "Error al completar el formulario" });

@@ -36,7 +36,8 @@ form {
 
 
 form label {
-  font-weight: 600;
+  font-weight: 700;
+  font-size: 16px;
   display: block;
   margin-bottom: 6px;
 }
@@ -585,4 +586,12 @@ input[type="checkbox"] {
   position: absolute;
   left: 0;
   color: #0277bd; /* Azul moderno */
+}
+
+#scanner video,
+#scanner canvas.drawingBuffer {
+  width: 100%   !important;
+  height: 100%  !important;
+  object-fit: contain;
+  display: block;
 }

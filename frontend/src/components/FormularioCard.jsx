@@ -55,7 +55,7 @@ function FormularioCard({ form }) {
       )}
 
       <h3 style={{ marginBottom: 8 }}>
-        <strong>Formulario #{form.id_formulario}</strong>
+        <strong>Orden N° {form.nro_orden}</strong>
       </h3>
 
       <p>

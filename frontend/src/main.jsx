@@ -8,6 +8,7 @@ import FormularioDetalle from "./pages/FormularioDetalle";
 import CrearFormulario from "./pages/CrearFormulario";
 import TecnicoPerfil from "./pages/TecnicoPerfil";
 import TecnicosAdmin from "./pages/TecnicosAdmin";
+import ScannerTestPage from "./pages/TestScanner.jsx";
 
 import { AuthProvider } from "./context/AuthContext.jsx";
 
@@ -22,6 +23,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
           <Route path="/crear-formulario" element={<CrearFormulario />} />
           <Route path="/tecnico/:id" element={<TecnicoPerfil />} />
           <Route path="/tecnicos" element={<TecnicosAdmin />} />
+          <Route path="/scanner-test" element={<ScannerTestPage />} />
           <Route path="*" element={<Login />} />
         </Routes>
       </AuthProvider>

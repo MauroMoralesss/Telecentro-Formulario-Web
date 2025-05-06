@@ -2,6 +2,8 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
+import { getCurrentPositionPromise } from "../api/geolocation.js";
+import DispositivoScanner from "../components/DispositivoScanner.jsx";
 
 import { AiOutlineWarning } from "react-icons/ai";
 
@@ -33,6 +35,9 @@ function FormularioDetalle() {
 
   const { usuario } = useAuth();
 
+  // Nuevo estado para lista de dispositivos
+  const [dispositivos, setDispositivos] = useState([]);
+
   useEffect(() => {
     const fetchForm = async () => {
       const res = await axios.get(`/formularios/${id}`, {
@@ -49,6 +54,13 @@ function FormularioDetalle() {
     };
     fetchForm();
   }, [id]);
+
+  // Sincronizar dispositivos tras cargar formulario
+  useEffect(() => {
+    if (formulario) {
+      setDispositivos(formulario.dispositivos || []);
+    }
+  }, [formulario]);
 
   if (!formulario) return <p>Cargando formulario...</p>;
 
@@ -80,6 +92,18 @@ function FormularioDetalle() {
 
   const enviarFormulario = async (e) => {
     e.preventDefault();
+
+    // Intentar capturar coordenadas
+    let latitud, longitud;
+    try {
+      const { coords } = await getCurrentPositionPromise({ timeout: 5000 });
+      latitud = coords.latitude;
+      longitud = coords.longitude;
+    } catch (err) {
+      console.warn("No se pudo obtener ubicación:", err.message);
+      // continuamos sin coordenadas
+    }
+
     if (enviando || !archivoInterior || !archivoExterior) {
       setAlerta("❌ Debes subir ambos videos: interior y exterior");
       return;
@@ -96,6 +120,12 @@ function FormularioDetalle() {
       formData.append("motivo_cierre", motivoCierre);
       formData.append("checklist", seleccionados.join(", "));
       formData.append("observaciones", observaciones);
+      formData.append("dispositivos", JSON.stringify(dispositivos));
+      // Añadir coords si las tenemos
+      if (latitud != null && longitud != null) {
+        formData.append("latitud", latitud);
+        formData.append("longitud", longitud);
+      }
 
       const res = await axios.patch(
         `/formularios/${formulario.id_formulario}/completar`,
@@ -151,14 +181,11 @@ function FormularioDetalle() {
   return (
     <div className="formulario-detalle-container card-container">
       <div className="card" style={{ padding: 20 }}>
-        <h2 style={{ marginBottom: 12 }}>
-          📋 Formulario #{formulario.id_formulario}
-        </h2>
+        <h2 style={{ marginBottom: 12 }}>📋 Orden N° {formulario.nro_orden}</h2>
 
         <div className="info-grid">
           <p>
-            <strong>Técnico ID:</strong>{" "}
-            {formulario.tecnico_id}
+            <strong>Técnico ID:</strong> {formulario.tecnico_id}
           </p>
           <p>
             <strong>Técnico:</strong>{" "}
@@ -216,7 +243,57 @@ function FormularioDetalle() {
           </>
         )}
 
-        <hr style={{ margin: "12px 0" }} />
+        <section style={{ margin: "2rem 0" }}>
+          <h3 style={{ borderBottom: "2px solid #ddd", paddingBottom: 4 }}>
+            🔌 Inventario registrados
+          </h3>
+          {dispositivos.length > 0 ? (
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))",
+                gap: "1rem",
+                marginTop: "1rem",
+              }}
+            >
+              {dispositivos.map((d, i) => (
+                <div
+                  key={i}
+                  style={{
+                    background: "#fafafa",
+                    border: "1px solid #e0e0e0",
+                    borderRadius: 6,
+                    padding: "12px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)",
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 4,
+                  }}
+                >
+                  <span style={{ fontSize: "0.9rem", color: "#555" }}>
+                    Tipo
+                  </span>
+                  <strong style={{ fontSize: "1.1rem", color: "#003399" }}>
+                    {d.tipo}
+                  </strong>
+                  <span
+                    style={{
+                      fontSize: "1rem",
+                      fontFamily: "monospace",
+                      color: "#333",
+                    }}
+                  >
+                    MAC: {d.mac}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p style={{ marginTop: 8, color: "#666" }}>
+              No hay dispositivos registrados aún.
+            </p>
+          )}
+        </section>
 
         <div>
           <p>
@@ -295,6 +372,20 @@ function FormularioDetalle() {
             </>
           )}
         </div>
+
+        {formulario.latitud && formulario.longitud && (
+          <section style={{ margin: "2rem 0" }}>
+            <h3>📍 Ubicación</h3>
+            <iframe
+              width="100%"
+              height="240"
+              style={{ border: 0, borderRadius: 8 }}
+              loading="lazy"
+              allowFullScreen
+              src={`https://www.google.com/maps?q=${formulario.latitud},${formulario.longitud}&z=15&output=embed`}
+            />
+          </section>
+        )}
 
         {usuario?.rol === "admin" &&
           ["En revision", "Visto sin validar"].includes(formulario.estado) && (
@@ -483,7 +574,17 @@ function FormularioDetalle() {
               </div>
             )}
 
-            <label>Motivo cierre:</label>
+            <hr />
+            <DispositivoScanner
+              dispositivos={dispositivos}
+              setDispositivos={setDispositivos}
+            />
+            <p style={{ marginBottom: "8px" }}>
+              Dispositivos agregados: {dispositivos.length}
+            </p>
+            <hr style={{ marginBottom: "8px" }} />
+
+            <label style={{ marginTop: "20px" }}>Motivo cierre:</label>
             <select
               value={motivoCierre}
               onChange={(e) => setMotivoCierre(e.target.value)}
