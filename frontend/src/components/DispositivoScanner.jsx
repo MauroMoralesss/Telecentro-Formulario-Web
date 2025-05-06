@@ -18,36 +18,15 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
       {
         inputStream: {
           type: "LiveStream",
+          constraints: { facingMode: "environment" },
           target: scannerRef.current,
-          constraints: {
-            facingMode: "environment",
-            // Forzamos modo vertical (height > width)
-            width: { ideal: 480 },
-            height: { ideal: 640 },
-          },
         },
-        locator: {
-          // Mejor parche “medio” + muestreo para móviles
-          patchSize: "medium",
-          halfSample: true,
-        },
-        // Limitamos el área de búsqueda al centro (20% alto arriba, abajo)
-        area: {
-          top: "20%", // dejar 20% arriba en blanco
-          right: "0%",
-          left: "0%",
-          bottom: "20%", // dejar 20% abajo en blanco
-        },
-        numOfWorkers: navigator.hardwareConcurrency || 4,
-        frequency: 10, // cuantos scans por segundo
-        decoder: {
-          readers: ["code_128_reader", "ean_reader"],
-        },
-        locate: true,
+        decoder: { readers: ["code_128_reader", "ean_reader"] },
       },
       (err) => {
         if (err) {
-          console.error("Quagga init failed:", err);
+          console.error("Error al iniciar Quagga:", err);
+          setErrorMsg("No se pudo acceder a la cámara");
           setEscaneando(false);
           return;
         }
@@ -55,10 +34,10 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
       }
     );
 
-    Quagga.onDetected((res) => {
-      const code = res.codeResult.code;
-      if (code) {
-        setMac(code);
+    Quagga.onDetected((result) => {
+      const nueva = result.codeResult.code;
+      if (nueva) {
+        setMac(nueva.toUpperCase());
         Quagga.stop();
         setEscaneando(false);
       }
@@ -66,7 +45,6 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
 
     return () => {
       Quagga.stop();
-      Quagga.offDetected();
     };
   }, [escaneando]);
 
@@ -111,10 +89,7 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h3 style={{ color: "#333", fontSize: "18px", fontWeight: "700" }}>
-        {" "}
-        📦 Inventarios{" "}
-      </h3>
+      <h3 style={{ color: "#333",fontSize: "18px", fontWeight: "700" }}> 📦 Inventarios </h3>
 
       {/* Mensajes de error y éxito */}
       {errorMsg && (
@@ -227,14 +202,16 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
 
       {escaneando && (
         <div
+          id="scanner"
           ref={scannerRef}
           style={{
             position: "relative",
             width: "100%",
-            height: "60vh",    // ocupa el 60% del alto de pantalla
+            aspectRatio: "9/16", // <— mantiene 16:9
+            marginBottom: 20,
             border: "1px solid #ccc",
+            borderRadius: 4,
             overflow: "hidden",
-            marginTop: 12
           }}
         >
           <div
