@@ -22,9 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Archivos de diseño nuevo
-columns.jsx
-DataTable.jsx
-MetricCard.jsx
-AdminDashboard.jsx
