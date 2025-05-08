@@ -168,12 +168,12 @@ function Dashboard() {
           </Link>
         </button>
         <button onClick={logout}>Cerrar sesión</button>
-        {usuario.rol === "admin" && (
+{/*         {usuario.rol === "admin" && (
           <NotificationsPanel
             notifications={notifications}
             setNotifications={setNotifications}
           />
-        )}
+        )} */}
       </div>
 
       <hr style={{ marginBottom: 20 }} />
