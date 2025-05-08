@@ -12,6 +12,7 @@ import {
   obtenerDispositivosPorFormulario,
 } from "../models/dispositivo.model.js";
 
+import { broadcast } from "../services/sse.service.js";
 import { cloudinary } from "../libs/cloudinary.js";
 import path from "path";
 import fs from "fs/promises";
@@ -74,6 +75,13 @@ export const cambiarEstado = async (req, res) => {
     ...(estado === "Rechazado" && motivo_rechazo ? { motivo_rechazo } : {}),
   });
 
+  // Notifico a todos los clientes SSE conectados
+/*   broadcast("formulario-actualizado", {
+    id: formulario.id_formulario,
+    nro_orden: formulario.nro_orden,
+    nuevoEstado: formulario.estado,
+  }); */
+
   res.json(formulario);
 };
 
@@ -101,6 +109,7 @@ export const completar = async (req, res) => {
     const files = req.files;
     let url_interior = null;
     let url_exterior = null;
+    let url_extra = null;
 
     const procesarVideo = async (archivo, tipo) => {
       const inputPath = archivo.path;
@@ -134,6 +143,9 @@ export const completar = async (req, res) => {
       if (files?.video_exterior) {
         url_exterior = await procesarVideo(files.video_exterior[0], "exterior");
       }
+      if (files?.video_extra) {
+        url_extra = await procesarVideo(files.video_extra[0], "extra");
+      }
     } catch (err) {
       console.error("🔥 Error en compresión/subida:", err);
       return res.status(500).json({ message: "Error al procesar los videos" });
@@ -156,6 +168,7 @@ export const completar = async (req, res) => {
       observaciones,
       url_video_interior: url_interior,
       url_video_exterior: url_exterior,
+      url_video_extra: url_extra,
       estado: "En revision",
       ...(latitud != null && longitud != null ? { latitud, longitud } : {}),
     });
@@ -163,6 +176,13 @@ export const completar = async (req, res) => {
     const dispositivos = await obtenerDispositivosPorFormulario(
       formulario.id_formulario
     );
+
+    // —— BROADCAST DE NOTIFICACION ——
+    broadcast("formulario-actualizado", {
+      id: actualizado.id_formulario,
+      nro_orden: actualizado.nro_orden,
+      nuevoEstado: actualizado.estado,
+    });
 
     return res.json({ ...actualizado, dispositivos });
   } catch (error) {

@@ -34,4 +34,5 @@ export const upload = multer({
 export const uploadMultiple = upload.fields([
   { name: "video_interior", maxCount: 1 },
   { name: "video_exterior", maxCount: 1 },
+  { name: "video_extra", maxCount: 1 },
 ]);

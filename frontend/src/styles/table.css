@@ -1,0 +1,100 @@
+/* contenedor de la tabla */
+.data-table-container {
+  overflow-x: auto;
+}
+
+/* tabla básica */
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+  font-size: 0.9rem;
+}
+
+.data-table th,
+.data-table td {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #eee;
+}
+
+/* fila vacía */
+.data-table .empty-table {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+}
+
+/* estilos para badges de estado */
+.badge-aprobado {
+  background: #e6f4ea;
+  color: #10b981;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.badge-rechazado {
+  background: #fdecea;
+  color: #ef4444;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.badge-en-revision {
+  background: #fff4e5;
+  color: #f59e0b;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.badge-iniciado {
+  background: #e8f0fe;
+  color: #3b82f6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+.badge-visto-sin-validar {
+  background: #f3e8ff;
+  color: #8b5cf6;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+}
+
+/* celda de domicilio con overflow */
+.address-cell {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+.address-cell:hover {
+  overflow: visible;
+  white-space: normal;
+}
+
+/* botones de icono en acciones */
+.btn-icon {
+  background: #3b82f6;
+  border: none;
+  color: #fff;
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+}
+.btn-icon:hover {
+  background: #2563eb;
+}
+
+/* footer de paginación */
+.table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 0.5rem;
+  font-size: 0.85rem;
+}

@@ -9,21 +9,28 @@ export const AuthProvider = ({ children }) => {
   const [cargando, setCargando] = useState(true);
   const navigate = useNavigate();
 
+  // Trae el perfil si ya hay cookie guardada
   const getProfile = async () => {
     try {
-      const res = await axios.get("/profile", {
-        withCredentials: true,
-      });
+      const res = await axios.get("/profile"); // ya usa withCredentials
       setUsuario(res.data);
-    } catch (error) {
+    } catch {
       setUsuario(null);
     } finally {
       setCargando(false);
     }
   };
 
+  // Nuevo método de login: hace POST, guarda usuario y devuelve datos
+  const login = async ({ id_tecnico, password }) => {
+    const res = await axios.post("/signin", { id_tecnico, password });
+    setUsuario(res.data);      // <-- actualizo el estado de usuario
+    return res.data;
+  };
+
+  // Cierra sesión
   const logout = async () => {
-    await axios.post("/signout", {}, { withCredentials: true });
+    await axios.post("/signout");
     setUsuario(null);
     navigate("/");
   };
@@ -33,7 +40,9 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ usuario, cargando, logout }}>
+    <AuthContext.Provider
+      value={{ usuario, cargando, login, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

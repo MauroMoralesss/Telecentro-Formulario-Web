@@ -13,13 +13,27 @@ export const crearFormulario = async ({
     `INSERT INTO formulario (
       tecnico_id, nro_orden, nro_cliente, nombre, domicilio, fecha_modificacion, telefono, servicios_instalar
     ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7) RETURNING *`,
-    [tecnico_id, nro_orden, nro_cliente, nombre, domicilio, telefono, servicios_instalar]
+    [
+      tecnico_id,
+      nro_orden,
+      nro_cliente,
+      nombre,
+      domicilio,
+      telefono,
+      servicios_instalar,
+    ]
   );
   return result.rows[0];
 };
 
 export const obtenerTodosFormularios = async () => {
-  const result = await pool.query(`SELECT * FROM formulario`);
+  const result = await pool.query(`SELECT 
+      f.*, 
+      t.nombre AS tecnico_nombre 
+    FROM formulario f
+    LEFT JOIN tecnicos t
+      ON f.tecnico_id = t.id_tecnico
+    ORDER BY f.fecha_creacion DESC`);
   return result.rows;
 };
 
@@ -47,7 +61,9 @@ export const actualizarFormulario = async (id, datos) => {
   valores.push(id); // último valor es el id
 
   const result = await pool.query(
-    `UPDATE formulario SET ${campos.join(", ")} WHERE id_formulario = $${i} RETURNING *`,
+    `UPDATE formulario SET ${campos.join(
+      ", "
+    )} WHERE id_formulario = $${i} RETURNING *`,
     valores
   );
 

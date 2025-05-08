@@ -1,20 +1,32 @@
 import { useState } from "react";
-import axios from "../api/axios.js";
+import { useNavigate } from "react-router-dom";
+import axios from "../api/axios.js";       // opcional: podés usar login de contexto
+import { useAuth } from "../context/AuthContext.jsx";
 
 function Login() {
   const [id_tecnico, setIdTecnico] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
+  const { login } = useAuth();   // <— uso el método del contexto
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
     try {
-      await axios.post("/signin", { id_tecnico: parseInt(id_tecnico), password }, {
-        withCredentials: true,
+      // llamo a login del contexto, que setea usuario al instante
+      const usuario = await login({
+        id_tecnico: parseInt(id_tecnico),
+        password
       });
-      window.location.href = "/dashboard";
+
+      // redirijo según rol (el back devuelve "rol": "admin" o "tecnico") - navigate("/admin/dashboard");
+      if (usuario.rol === "admin") {
+        navigate("/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err) {
       setError(err.response?.data?.message || "Error al iniciar sesión");
     }
@@ -24,9 +36,7 @@ function Login() {
     <div className="login-container">
       <div className="login-box">
         <h2>Iniciar sesión</h2>
-
         {error && <div className="login-error">{error}</div>}
-
         <form onSubmit={handleLogin}>
           <div className="input-group">
             <label>ID Técnico</label>

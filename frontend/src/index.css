@@ -144,26 +144,12 @@ a:hover {
   box-shadow: 0 0 8px rgba(25, 118, 210, 0.1);
 }
 
-/* Estado por color */
-.estado-aprobado {
-  color: #2e7d32;
-  font-weight: bold;
-}
-
-.estado-rechazado {
-  color: #c62828;
-  font-weight: bold;
-}
-
-.estado-en-revision {
-  color: #0277bd;
-  font-weight: bold;
-}
-
-.estado-visto-sin-validar {
-  color: #f1c40f;
-  font-weight: bold;
-}
+/* colores por estado */
+.estado-aprobado        { color: #2e7d32; font-weight: 600; }
+.estado-rechazado       { color: #c62828; font-weight: 600; }
+.estado-en-revision     { color: #0277bd; font-weight: 600; }
+.estado-iniciado        { color: #377771; font-weight: 600; }
+.estado-visto-sin-validar { color: #f1c40f; font-weight: 600; }
 
 .link {
   color: #1976d2;
@@ -173,6 +159,70 @@ a:hover {
 .link:hover {
   text-decoration: underline;
 }
+
+.dashboard {
+  width: 100%;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.form-card-formularios {
+  display: flex;
+  width: 100%;
+  background: #fff;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
+  margin-bottom: 1.5rem;
+  position: relative;
+}
+
+/* banda lateral coloreada */
+.form-card__band {
+  width: 6px;
+}
+
+/* cuerpo de la tarjeta */
+.form-card__body {
+  padding: 1rem 1.5rem;
+  flex: 1;
+  position: relative;
+}
+
+/* badge de rechazado */
+.form-card__badge-rechazado {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #f8d7da;
+  color: #842029;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* título */
+.form-card__title {
+  margin: 0 0 0.75rem;
+  font-size: 1.1rem;
+  color: #1f2937;
+}
+
+/* info */
+.form-card__info p {
+  margin: 0.3rem 0;
+  font-size: 0.9rem;
+  color: #374151;
+}
+
+/* botón */
+.form-card__btn {
+  margin-top: 1rem;
+}
+
 
 /* Login */
 

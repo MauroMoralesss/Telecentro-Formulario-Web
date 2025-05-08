@@ -98,3 +98,5 @@ CREATE TABLE public.dispositivo (
 );
 
 ALTER TABLE dispositivo DROP CONSTRAINT dispositivo_formulario_id_key;
+
+ALTER TABLE formulario ADD COLUMN url_video_extra TEXT;

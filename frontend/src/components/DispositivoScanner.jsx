@@ -89,7 +89,10 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
         fontFamily: "Arial, sans-serif",
       }}
     >
-      <h3 style={{ color: "#333",fontSize: "18px", fontWeight: "700" }}> 📦 Inventarios </h3>
+      <h3 style={{ color: "#333", fontSize: "18px", fontWeight: "700" }}>
+        {" "}
+        📦 Inventarios{" "}
+      </h3>
 
       {/* Mensajes de error y éxito */}
       {errorMsg && (
@@ -238,7 +241,7 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
             }}
           >
             <h3>📦 Dispositivos agregados:</h3>
-            <button
+            {/*             <button
               onClick={handleLimpiar}
               style={{
                 background: "#f57c00",
@@ -258,7 +261,7 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
               aria-label="Limpiar lista de dispositivos"
             >
               🧹 Limpiar todo
-            </button>
+            </button> */}
           </div>
           <div style={{ maxHeight: 200, overflowY: "auto", marginTop: 10 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -275,7 +278,7 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
                     <td style={{ padding: 8 }}>{d.tipo}</td>
                     <td style={{ padding: 8 }}>{d.mac}</td>
                     <td style={{ padding: 8, textAlign: "center" }}>
-                      <button
+                      {/* <button
                         onClick={() => handleEliminar(i)}
                         style={{
                           background: "#c62828",
@@ -295,7 +298,7 @@ export default function DispositivoScanner({ dispositivos, setDispositivos }) {
                         aria-label="Eliminar dispositivo"
                       >
                         🗑️
-                      </button>
+                      </button> */}
                     </td>
                   </tr>
                 ))}

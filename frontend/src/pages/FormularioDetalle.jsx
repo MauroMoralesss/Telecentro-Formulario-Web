@@ -29,6 +29,8 @@ function FormularioDetalle() {
   const [archivoExterior, setArchivoExterior] = useState(null);
   const [previewInterior, setPreviewInterior] = useState(null);
   const [previewExterior, setPreviewExterior] = useState(null);
+  const [archivoExtra, setArchivoExtra] = useState(null);
+  const [previewExtra, setPreviewExtra] = useState(null);
   const [alerta, setAlerta] = useState("");
   const [motivoRechazo, setMotivoRechazo] = useState("");
   const [estadoMsg, setEstadoMsg] = useState("");
@@ -117,6 +119,7 @@ function FormularioDetalle() {
       const formData = new FormData();
       if (archivoInterior) formData.append("video_interior", archivoInterior);
       if (archivoExterior) formData.append("video_exterior", archivoExterior);
+      if (archivoExtra) formData.append("video_extra", archivoExtra);
       formData.append("motivo_cierre", motivoCierre);
       formData.append("checklist", seleccionados.join(", "));
       formData.append("observaciones", observaciones);
@@ -373,6 +376,31 @@ function FormularioDetalle() {
           )}
         </div>
 
+        {formulario.url_video_extra && (
+          <>
+            <p>
+              <strong>Video Extra:</strong>{" "}
+              <a
+                href={formulario.url_video_extra}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Ver video
+              </a>
+            </p>
+            <div className="preview-archivo" style={{ marginTop: 10 }}>
+              <video
+                controls
+                style={{ maxWidth: "100%", borderRadius: 6 }}
+                referrerPolicy="no-referrer"
+              >
+                <source src={formulario.url_video_extra} type="video/mp4" />
+                Tu navegador no soporta este formato.
+              </video>
+            </div>
+          </>
+        )}
+
         {formulario.latitud && formulario.longitud && (
           <section style={{ margin: "2rem 0" }}>
             <h3>📍 Ubicación</h3>
@@ -567,6 +595,33 @@ function FormularioDetalle() {
                 </p>
                 <video
                   src={previewExterior}
+                  controls
+                  width="100%"
+                  style={{ borderRadius: "8px", maxHeight: "300px" }}
+                />
+              </div>
+            )}
+
+            <label>Video Extra (opcional):</label>
+            <input
+              type="file"
+              accept="video/*"
+              capture="environment"
+              disabled={enviando}
+              onChange={(e) => {
+                const file = e.target.files[0];
+                setArchivoExtra(file);
+                setPreviewExtra(URL.createObjectURL(file));
+              }}
+            />
+
+            {previewExtra && (
+              <div style={{ marginTop: "1rem", marginBottom: "1rem" }}>
+                <p>
+                  <strong>Vista previa Extra:</strong>
+                </p>
+                <video
+                  src={previewExtra}
                   controls
                   width="100%"
                   style={{ borderRadius: "8px", maxHeight: "300px" }}
