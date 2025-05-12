@@ -9,6 +9,7 @@ import FiltrosAvanzados from "../components/FiltrosAvanzados";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "../styles/dashboard.css";
 import NotificationsPanel from "../components/ui/NotificationsPanel.jsx";
 
 function Dashboard() {

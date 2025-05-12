@@ -124,6 +124,7 @@
   position: relative;
 }
 .btn-icon {
+  color: black;
   background: none;
   border: none;
   cursor: pointer;
