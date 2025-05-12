@@ -9,7 +9,7 @@ import FiltrosAvanzados from "../components/FiltrosAvanzados";
 
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import NotificationsPanel from "../components/NotificationsPanel";
+import NotificationsPanel from "../components/ui/NotificationsPanel.jsx";
 
 function Dashboard() {
   const { usuario, cargando, logout } = useAuth();
@@ -168,12 +168,12 @@ function Dashboard() {
           </Link>
         </button>
         <button onClick={logout}>Cerrar sesión</button>
-{/*         {usuario.rol === "admin" && (
+                {usuario.rol === "admin" && (
           <NotificationsPanel
             notifications={notifications}
             setNotifications={setNotifications}
           />
-        )} */}
+        )}
       </div>
 
       <hr style={{ marginBottom: 20 }} />

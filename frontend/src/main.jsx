@@ -3,8 +3,8 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login.jsx";
-/* import AdminDashboard from "./pages/AdminDashboard.jsx"; */
-import Dashboard from "./pages/Dashboard.jsx";
+/* import AdminDashboard from "./pages/AdminDashboard.jsx";
+ */import Dashboard from "./pages/Dashboard.jsx";
 import FormularioDetalle from "./pages/FormularioDetalle";
 import CrearFormulario from "./pages/CrearFormulario";
 import TecnicoPerfil from "./pages/TecnicoPerfil";
@@ -29,8 +29,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
             <Route path="/tecnico/:id" element={<TecnicoPerfil />} />
             <Route path="/tecnicos" element={<TecnicosAdmin />} />
             {/* dashboard de admin también protegido */}
-            {/* <Route path="/admin/dashboard" element={<AdminDashboard />} /> */}
-          </Route>
+{/*             <Route path="/admin/dashboard" element={<AdminDashboard />} />
+ */}          </Route>
           {/* cualquiera que no matchee va al login */}
           <Route path="*" element={<Login />} />
         </Routes>

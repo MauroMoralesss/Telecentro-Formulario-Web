@@ -3,16 +3,18 @@ import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
-import MetricCard from "../components/MetricCard.jsx";
-import DataTable from "../components/DataTable.jsx";
-import { columns } from "../components/columns.jsx";
-import NotificationsPanel from "../components/NotificationsPanel.jsx";
-
-import { FiHome, FiFileText, FiUsers, FiPlus, FiLogOut } from "react-icons/fi";
+import Layout from "../components/layout/Layout.jsx";
+import DataTable from "../components/ui/DataTable.jsx";
+import { columns } from "../components/ui/columns.jsx";
+import { isSameDay, addDays, subDays, format } from "date-fns";
+import DatePicker from "react-datepicker";
+import es from "date-fns/locale/es";
+import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 // react-toastify
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import "react-datepicker/dist/react-datepicker.css";
 
 import "../styles/global.css";
 import "../styles/dashboard.css";
@@ -22,9 +24,14 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
   const { logout, usuario } = useAuth();
 
+  // Estado local
   const [formularios, setFormularios] = useState([]);
   const [activeTab, setActiveTab] = useState("Todos");
   const [search, setSearch] = useState("");
+  const [notifications, setNotifications] = useState(() => {
+    const stored = localStorage.getItem("notifications");
+    return stored ? JSON.parse(stored) : [];
+  });
 
   const estados = [
     "Todos",
@@ -35,244 +42,124 @@ export default function AdminDashboard() {
     "Rechazado",
   ];
 
-  const [notifications, setNotifications] = useState(() => {
-    // leer de localStorage si existe
-    const stored = localStorage.getItem("notifications");
-    return stored ? JSON.parse(stored) : [];
-  });
+  const [selectedDate, setSelectedDate] = useState(new Date());
 
+  // Carga inicial de datos
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await axios.get("/formularios", {
-          withCredentials: true,
-        });
-        setFormularios(res.data);
-      } catch (err) {
-        console.error("Error al cargar formularios:", err);
-      }
-    })();
+    axios
+      .get("/formularios", { withCredentials: true })
+      .then((r) => setFormularios(r.data))
+      .catch(console.error);
   }, []);
 
-  // —— SSE: suscripción a cambios de estado ——
+  // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/api/formularios/events`);
-
-    evtSource.addEventListener("formulario-actualizado", (e) => {
+    const es = new EventSource(`${base}/api/formularios/events`);
+    es.addEventListener("formulario-actualizado", (e) => {
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
 
-      // 1) Actualiza tu listado local
+      // 1) Actualiza la lista local de formularios
       setFormularios((prev) =>
         prev.map((f) =>
           f.id_formulario === id ? { ...f, estado: nuevoEstado } : f
         )
       );
 
-      // 2) Prepara la notificación
-      const mensaje = `Informe N° ${nro_orden} → Cambio a ${nuevoEstado}`;
-      const nuevaNotif = {
-        id: Date.now(),
-        mensaje,
-        fecha: new Date().toISOString(),
-        leido: false,
-      };
-
-      // 3) Agrega la notificación a tu estado
-      setNotifications((prev) => [nuevaNotif, ...prev]);
-
-      // 4) Muestra el toast
+      // 2) Trigger toast
+      const mensaje = `Informe N° ${nro_orden} → cambio a ${nuevoEstado}`;
       toast.info(mensaje, { icon: "🔔" });
-    });
 
-    return () => evtSource.close();
+      // 3) Añade al panel de notificaciones
+      setNotifications((prev) => [
+        {
+          id: Date.now(),
+          mensaje,
+          fecha: new Date().toISOString(),
+          leido: false,
+        },
+        ...prev,
+      ]);
+    });
+    return () => es.close();
   }, []);
 
-  // sincronizar con localStorage cada vez que notifications cambie
+  // Persiste notifs en localStorage
   useEffect(() => {
     localStorage.setItem("notifications", JSON.stringify(notifications));
   }, [notifications]);
 
-  // Fechas de comparación
-  const now = new Date();
-  const weekAgo = new Date(now);
-  weekAgo.setDate(now.getDate() - 7);
-  const twoWeeksAgo = new Date(now);
-  twoWeeksAgo.setDate(now.getDate() - 14);
+  // Filtrado por pestaña y búsqueda
+  let filtrados = formularios.filter(
+    (f) => activeTab === "Todos" || f.estado === activeTab
+  );
 
-  // Helper para contar en rango + estado
-  const countByPeriodo = (start, end, estado) =>
-    formularios.filter((f) => {
-      const d = new Date(f.fecha_creacion);
-      return d >= start && d < end && f.estado === estado;
-    }).length;
-
-  // Métricas totales
-  const total = formularios.length;
-  const pendientes = formularios.filter(
-    (f) => f.estado === "En revisión"
-  ).length;
-  const aprobados = formularios.filter((f) => f.estado === "Aprobado").length;
-  const rechazados = formularios.filter((f) => f.estado === "Rechazado").length;
-  const tecnicosActivos = new Set(formularios.map((f) => f.tecnico_id)).size;
-
-  // Cálculo de trends semanales
-  const makeTrend = (thisVal, lastVal) => {
-    if (lastVal === 0) return "—";
-    const pct = ((thisVal - lastVal) / lastVal) * 100;
-    const sign = pct >= 0 ? "+" : "";
-    return `${sign}${pct.toFixed(1)}% vs sem. pasada`;
-  };
-
-  const pendientesThis = countByPeriodo(weekAgo, now, "En revisión");
-  const pendientesLast = countByPeriodo(twoWeeksAgo, weekAgo, "En revisión");
-  const pendientesTrend = makeTrend(pendientesThis, pendientesLast);
-
-  const aprobadosThis = countByPeriodo(weekAgo, now, "Aprobado");
-  const aprobadosLast = countByPeriodo(twoWeeksAgo, weekAgo, "Aprobado");
-  const aprobadosTrend = makeTrend(aprobadosThis, aprobadosLast);
-
-  const rechazadosThis = countByPeriodo(weekAgo, now, "Rechazado");
-  const rechazadosLast = countByPeriodo(twoWeeksAgo, weekAgo, "Rechazado");
-  const rechazadosTrend = makeTrend(rechazadosThis, rechazadosLast);
-
-  // Para técnicos activos: cuántos IDs distintos en cada periodo
-  const techsByPeriodo = (start, end) =>
-    new Set(
-      formularios
-        .filter((f) => {
-          const d = new Date(f.fecha_creacion);
-          return d >= start && d < end;
-        })
-        .map((f) => f.tecnico_id)
-    ).size;
-  const techsThis = techsByPeriodo(weekAgo, now);
-  const techsLast = techsByPeriodo(twoWeeksAgo, weekAgo);
-  const techsTrend = makeTrend(techsThis, techsLast);
-
-  // Filtros y búsquedas
-  const filtrados = formularios
-    .filter((f) => activeTab === "Todos" || f.estado === activeTab)
-    .filter((f) =>
+  if (search.trim() !== "") {
+    filtrados = filtrados.filter((f) =>
       Object.values(f).some((v) =>
         String(v).toLowerCase().includes(search.toLowerCase())
       )
     );
+  } else {
+    filtrados = filtrados.filter((f) => {
+      const fechaForm = new Date(f.fecha_creacion);
+      return isSameDay(fechaForm, selectedDate);
+    });
+  }
 
   return (
-    <div className="dashboard-layout">
-      {/* SIDEBAR */}
-      <aside className="sidebar">
-        <div className="sidebar-brand">Magoo Solutions</div>
-        <nav>
-          <ul>
-            <li className="active" onClick={() => navigate("/admin/dashboard")}>
-              <FiHome size={18} style={{ marginRight: 8 }} />
-              Dashboard
-            </li>
-            <li onClick={() => navigate("/admin/formularios")}>
-              <FiFileText size={18} style={{ marginRight: 8 }} />
-              Formularios
-            </li>
-            <li onClick={() => navigate("/admin/tecnicos")}>
-              <FiUsers size={18} style={{ marginRight: 8 }} />
-              Técnicos
-            </li>
-          </ul>
-        </nav>
-        <div className="sidebar-footer">
-          <div className="user-avatar">{usuario?.nombre?.[0] ?? "A"}</div>
-          <div>
-            <div style={{ fontSize: "0.875rem", fontWeight: 500 }}>
-              {usuario?.nombre || "Admin"}
-            </div>
-            <div style={{ fontSize: "0.75rem", color: "#ccc" }}>
-              {usuario?.email || "admin@ejemplo.com"}
-            </div>
-          </div>
-        </div>
-      </aside>
-
-      {/* MAIN CONTENT */}
+    <Layout
+      userName={usuario?.nombre}
+      userEmail={usuario?.email}
+      notifications={notifications}
+      setNotifications={setNotifications}
+      onNew={() => navigate("/admin/formulario/nuevo")}
+      onViewTechs={() => navigate("/admin/tecnicos")}
+      onLogout={() => {
+        logout();
+        navigate("/login");
+      }}
+    >
+      {/* ToastContainer para los mensajes push */}
       <ToastContainer
         position="top-center"
         autoClose={5000}
-        hideProgressBar={false}
         newestOnTop
         closeOnClick
-        rtl={false}
-        pauseOnHover
       />
-      <div className="main-content">
-        {/* HEADER */}
-        <header className="main-header">
-          <h1>Dashboard</h1>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <button
-              className="btn-primary"
-              onClick={() => navigate("/admin/formulario/nuevo")}
-            >
-              <FiPlus style={{ marginRight: 4 }} />
-              Crear formulario
-            </button>
-            <button
-              className="btn-outline"
-              onClick={() => navigate("/admin/tecnicos")}
-            >
-              <FiUsers style={{ marginRight: 4 }} />
-              Ver técnicos
-            </button>
-            <button
-              className="btn-outline"
-              onClick={() => {
-                logout();
-                navigate("/login");
-              }}
-            >
-              <FiLogOut style={{ marginRight: 4 }} />
-              Cerrar sesión
-            </button>
-            {/* aquí ponemos nuestro panel */}
-            <NotificationsPanel
-              notifications={notifications}
-              setNotifications={setNotifications}
-            />
-          </div>
-        </header>
 
-        {/* MÉTRICAS */}
-        <section className="metrics-cards">
-          <MetricCard
-            title="Total Formularios"
-            value={total}
-            trend={makeTrend(
-              countByPeriodo(weekAgo, now), // nuevos esta semana
-              countByPeriodo(twoWeeksAgo, weekAgo) // vs semana pasada
-            )}
-          />
-          <MetricCard
-            title="Pendientes"
-            value={pendientes}
-            trend={pendientesTrend}
-          />
-          <MetricCard
-            title="Aprobados"
-            value={aprobados}
-            trend={aprobadosTrend}
-          />
-          <MetricCard
-            title="Rechazados"
-            value={rechazados}
-            trend={rechazadosTrend}
-          />
-          <MetricCard
-            title="Técnicos Activos"
-            value={tecnicosActivos}
-            trend={techsTrend}
-          />
-        </section>
+      <div className="date-navigator">
+        <button
+          className="boton-flecha-fecha"
+          onClick={() => setSelectedDate((d) => subDays(d, 1))}
+        >
+          <FiChevronLeft />
+        </button>
+        <span style={{ minWidth: 200, textAlign: "center", fontWeight: 500 }}>
+          {format(selectedDate, "EEEE dd 'de' MMMM yyyy", { locale: es })}
+        </span>
+        <button
+          className="boton-flecha-fecha"
+          onClick={() => setSelectedDate((d) => addDays(d, 1))}
+        >
+          <FiChevronRight />
+        </button>
 
-        {/* TABS */}
+        {/* Reemplazo del input nativo con React-DatePicker */}
+        <DatePicker
+          selected={selectedDate}
+          onChange={(date) => setSelectedDate(date)}
+          dateFormat="dd/MM/yyyy" // Formato de cómo se muestra la fecha en el input
+          locale={es} // Para que el calendario popup esté en español
+          className="tu-clase-css-para-el-input-datepicker" // Clase CSS opcional para el input
+          // Puedes añadir un customInput si quieres un control total sobre el input
+          // customInput={<CustomInput />}
+        />
+      </div>
+
+      {/* Tabla de resultados */}
+      <div className="table-section">
+        {/* Pestañas de estado */}
         <div className="tabs">
           {estados.map((est) => (
             <button
@@ -285,7 +172,7 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* BÚSQUEDA */}
+        {/* Buscador global */}
         <div className="search-bar">
           <input
             type="text"
@@ -294,12 +181,8 @@ export default function AdminDashboard() {
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
-
-        {/* TABLA */}
-        <div className="table-section">
-          <DataTable columns={columns} data={filtrados} />
-        </div>
+        <DataTable columns={columns} data={filtrados} />
       </div>
-    </div>
+    </Layout>
   );
 }

@@ -113,13 +113,22 @@ export const completar = async (req, res) => {
 
     const procesarVideo = async (archivo, tipo) => {
       const inputPath = archivo.path;
-      const outputPath = inputPath.replace(/\.mp4$/, `-${tipo}-compressed.mp4`);
+      const { name } = path.parse(inputPath);
+      const outputPath = path.join(
+        path.dirname(inputPath),
+        `${name}-${tipo}-compressed.mp4`
+      );
 
       console.log(`🎬 ${tipo}: Ruta original:`, inputPath);
 
-      await execAsync(
-        `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
-      );
+      try {
+        await execAsync(
+          `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
+        );
+      } catch (error) {
+        console.error(`❌ Error en compresión FFmpeg: ${error.message}`);
+        throw new Error("Error al procesar el video.");
+      }
 
       console.log(`✅ ${tipo}: Comprimido:`, outputPath);
 

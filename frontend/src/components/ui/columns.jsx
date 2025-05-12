@@ -25,24 +25,24 @@ function badgeClass(estado) {
 
 export const columns = [
   {
+    accessorKey: "tecnico_nombre",
+    header: "Técnico",
+  },
+  {
     accessorKey: "nro_orden",
     header: "N° Orden",
   },
   {
     accessorKey: "nombre",
-    header: "Cliente",
+    header: "N° Cliente",
     cell: ({ row }) => (
       <div>
-        <div>{row.original.nombre}</div>
-        <div style={{ fontSize: "0.8em", color: "#666" }}>
-          #{row.original.nro_cliente}
-        </div>
+        <div>{row.original.nro_cliente}</div>
+{/*         <div style={{ fontSize: "0.8em", color: "#666" }}>
+        {row.original.nombre}   
+        </div> */}
       </div>
     ),
-  },
-  {
-    accessorKey: "tecnico_id",
-    header: "Técnico ID",
   },
   {
     accessorKey: "domicilio",
