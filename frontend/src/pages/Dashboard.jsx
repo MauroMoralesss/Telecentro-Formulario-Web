@@ -55,7 +55,7 @@ function Dashboard() {
     if (usuario?.rol !== "admin") return;
 
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/api/formularios/events`);
+    const evtSource = new EventSource(`${base}/formularios/events`);
 
     evtSource.addEventListener("formulario-actualizado", (e) => {
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
