@@ -37,7 +37,7 @@ export default function AdminDashboard() {
   const estados = [
     "Todos",
     "Iniciado",
-    "En revisión",
+    "En revision",
     "Aprobado",
     "Visto sin validar",
     "Rechazado",
