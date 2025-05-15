@@ -1,5 +1,6 @@
 import React from "react";
 import { FiEye, FiMoreVertical } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 
 // Helper: formatea la fecha al estilo es-AR
 function formatDate(dateStr) {
@@ -15,12 +16,15 @@ function formatDate(dateStr) {
 
 // Helper: construye la clase CSS para el badge según el estado
 function badgeClass(estado) {
-  return "badge-" + estado
-    .toLowerCase()
-    .replace(/á/g, "a")
-    .replace(/í/g, "i")
-    .replace(/é/g, "e")
-    .replace(/\s+/g, "-");
+  return (
+    "badge-" +
+    estado
+      .toLowerCase()
+      .replace(/á/g, "a")
+      .replace(/í/g, "i")
+      .replace(/é/g, "e")
+      .replace(/\s+/g, "-")
+  );
 }
 
 export const columns = [
@@ -38,7 +42,7 @@ export const columns = [
     cell: ({ row }) => (
       <div>
         <div>{row.original.nro_cliente}</div>
-{/*         <div style={{ fontSize: "0.8em", color: "#666" }}>
+        {/*         <div style={{ fontSize: "0.8em", color: "#666" }}>
         {row.original.nombre}   
         </div> */}
       </div>
@@ -68,23 +72,24 @@ export const columns = [
   {
     id: "acciones",
     header: "Acciones",
-    cell: ({ row }) => (
-      <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-        <button
-          onClick={() => {}}
-          className="btn-icon"
-          title="Ver detalles"
-        >
-          <FiEye />
-        </button>
-        <button
-          onClick={() => {}}
-          className="btn-icon"
-          title="Más..."
-        >
-          <FiMoreVertical />
-        </button>
-      </div>
-    ),
+    // aquí ya podemos llamar useNavigate porque estamos dentro de un renderer de celda
+    cell: ({ row }) => {
+      const navigate = useNavigate();
+      const id = row.original.id_formulario;
+      return (
+        <div style={{ display: "flex", gap: 8, justifyContent: "flex-center" }}>
+          <button
+            onClick={() => navigate(`/admin/formulario/${id}`)}
+            className="btn-icon"
+            title="Ver detalles"
+          >
+            <FiEye />
+          </button>
+{/*           <button className="btn-icon" title="Más...">
+            <FiMoreVertical />
+          </button> */}
+        </div>
+      );
+    },
   },
 ];

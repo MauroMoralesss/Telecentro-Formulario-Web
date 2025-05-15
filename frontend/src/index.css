@@ -11,8 +11,6 @@ body {
   font-family: 'Poppins', sans-serif;
   background-color: #f4f4f4;
   color: #333;
-  padding: 20px;
-  margin: 0;
 }
 
 /* Títulos */
@@ -62,10 +60,10 @@ button {
   transition: background-color 0.3s ease, transform 0.1s ease;
 }
 
-button:hover {
+/* button:hover {
   background-color: #0056b3;
   transform: translateY(-1px);
-}
+} */
 
 button:disabled {
   background-color: #a1c1ea;
@@ -83,9 +81,9 @@ button, .btn {
   transition: background-color 0.3s ease;
 }
 
-button:hover, .btn:hover {
+/* button:hover, .btn:hover {
   background-color: #1565c0;
-}
+} */
 
 input,
 select,

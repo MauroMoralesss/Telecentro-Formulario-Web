@@ -55,7 +55,9 @@ function Dashboard() {
     if (usuario?.rol !== "admin") return;
 
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/formularios/events`);
+    const evtSource = new EventSource(`${base}/formularios/events`, {
+      withCredentials: true,
+    });
 
     evtSource.addEventListener("formulario-actualizado", (e) => {
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
@@ -151,6 +153,9 @@ function Dashboard() {
       >
         {usuario?.rol === "admin" && (
           <>
+            <button onClick={() => navigate("/admin/dashboard")}>
+              NUEVO DISEÑO
+            </button>
             <button onClick={() => navigate("/crear-formulario")}>
               ➕ Crear formulario
             </button>
@@ -169,7 +174,7 @@ function Dashboard() {
           </Link>
         </button>
         <button onClick={logout}>Cerrar sesión</button>
-                {usuario.rol === "admin" && (
+        {usuario.rol === "admin" && (
           <NotificationsPanel
             notifications={notifications}
             setNotifications={setNotifications}

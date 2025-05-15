@@ -26,44 +26,44 @@
 
 /* estilos para badges de estado */
 .badge-aprobado {
-  background: #e6f4ea;
-  color: #10b981;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
+  background-color: #10b981;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
+  color: white;
 }
 .badge-rechazado {
-  background: #fdecea;
-  color: #ef4444;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
+  background-color: #ef4444;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
+  color: white;
 }
 .badge-en-revision {
-  background: #fff4e5;
-  color: #f59e0b;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
+  background-color: #3b82f6;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
+  color: white;
 }
 .badge-iniciado {
-  background: #e8f0fe;
-  color: #3b82f6;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
+  background-color: #6b7280;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
+  color: white;
 }
 .badge-visto-sin-validar {
-  background: #f3e8ff;
-  color: #8b5cf6;
-  padding: 2px 8px;
-  border-radius: 4px;
-  font-size: 1rem;
+  background-color: #f59e0b;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
   font-weight: 600;
+  color: white;
 }
 
 /* celda de domicilio con overflow */
@@ -102,4 +102,8 @@
   justify-content: space-between;
   padding-top: 0.5rem;
   font-size: 0.85rem;
+}
+
+.table-footer button{
+  color: black;
 }

@@ -18,7 +18,9 @@ const router = Router();
 router.get("/formularios/mios", isAuth, listarDelTecnico);
 
 // Admin
-router.get("/formularios/events", (req, res) => registerClient(res));
+router.get("/formularios/events", (req, res) =>
+  registerClient(req, res)
+);
 router.post("/formularios", isAuth, crear);
 router.get("/formularios", isAuth, listarTodos);
 router.get("/formularios/:id", isAuth, obtener);

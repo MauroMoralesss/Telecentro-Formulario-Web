@@ -19,6 +19,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import "../styles/global.css";
 import "../styles/dashboard.css";
 import "../styles/table.css";
+import "../styles/modal.css";
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
@@ -55,33 +56,63 @@ export default function AdminDashboard() {
   // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const es = new EventSource(`${base}/api/formularios/events`);
-    es.addEventListener("formulario-actualizado", (e) => {
+    const evtSource = new EventSource(`${base}/formularios/events`, {
+      withCredentials: true,
+    });
+
+    evtSource.addEventListener("formulario-actualizado", (e) => {
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
 
-      // 1) Actualiza la lista local de formularios
+      // 1. Actualizar el estado local
       setFormularios((prev) =>
         prev.map((f) =>
           f.id_formulario === id ? { ...f, estado: nuevoEstado } : f
         )
       );
 
-      // 2) Trigger toast
-      const mensaje = `Informe N° ${nro_orden} → cambio a ${nuevoEstado}`;
-      toast.info(mensaje, { icon: "🔔" });
+      // 2. Guardar la notificación
+      const nuevaNotif = {
+        id: Date.now(),
+        mensaje: `Formulario N° ${nro_orden} → Estado: ${nuevoEstado}`,
+        fecha: new Date().toISOString(),
+        leido: false,
+        id_formulario: id,
+      };
 
-      // 3) Añade al panel de notificaciones
-      setNotifications((prev) => [
-        {
-          id: Date.now(),
-          mensaje,
-          fecha: new Date().toISOString(),
-          leido: false,
-        },
-        ...prev,
-      ]);
+      setNotifications((prev) => [nuevaNotif, ...prev]);
+
+      // 3. Mostrar toast con botón
+      toast.info(
+        ({ closeToast }) => (
+          <div>
+            📋 <strong>Formulario N° {nro_orden}</strong>
+            <br />
+            Estado: <strong>{nuevoEstado}</strong>
+            <br />
+            <button
+              style={{
+                marginTop: 6,
+                background: "#1976d2",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                closeToast();
+                navigate(`/formulario/${id}`);
+              }}
+            >
+              Ver detalles
+            </button>
+          </div>
+        ),
+        { autoClose: 7000 }
+      );
     });
-    return () => es.close();
+
+    return () => evtSource.close();
   }, []);
 
   // Persiste notifs en localStorage
@@ -113,8 +144,6 @@ export default function AdminDashboard() {
       userEmail={usuario?.email}
       notifications={notifications}
       setNotifications={setNotifications}
-      onNew={() => navigate("/admin/formulario/nuevo")}
-      onViewTechs={() => navigate("/admin/tecnicos")}
       onLogout={() => {
         logout();
         navigate("/login");
@@ -160,11 +189,11 @@ export default function AdminDashboard() {
       {/* Tabla de resultados */}
       <div className="table-section">
         {/* Pestañas de estado */}
-        <div className="tabs">
+        <div className="tabbs">
           {estados.map((est) => (
             <button
               key={est}
-              className={`tab ${activeTab === est ? "active" : ""}`}
+              className={`tabb ${activeTab === est ? "active" : ""}`}
               onClick={() => setActiveTab(est)}
             >
               {est}

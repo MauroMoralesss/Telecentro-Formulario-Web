@@ -11,7 +11,6 @@ export default function NotificationsPanel({
   const unreadCount = notifications.filter((n) => !n.leido).length;
   const navigate = useNavigate();
 
-
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, leido: true })));
   };
@@ -62,18 +61,19 @@ export default function NotificationsPanel({
                 <div className="notif-time">
                   {new Date(n.fecha).toLocaleTimeString("es-AR")}
                 </div>
-
-                {n.id_formulario && (
-                  <button
-                    className="btn-ver-formulario"
-                    onClick={() => {
-                      setOpen(false);
-                      navigate(`/formulario/${n.id_formulario}`);
-                    }}
-                  >
-                    Ver formulario
-                  </button>
-                )}
+                <div className="dropdown-btn">
+                  {n.id_formulario && (
+                    <button
+                      className="btn-ver-formulario"
+                      onClick={() => {
+                        setOpen(false);
+                        navigate(`/admin/formulario/${n.id_formulario}`);
+                      }}
+                    >
+                      Ver detalles
+                    </button>
+                  )}
+                </div>
               </div>
             ))
           )}

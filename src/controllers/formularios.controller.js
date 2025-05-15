@@ -179,6 +179,7 @@ export const completar = async (req, res) => {
       url_video_exterior: url_exterior,
       url_video_extra: url_extra,
       estado: "En revision",
+      motivo_rechazo: null,
       ...(latitud != null && longitud != null ? { latitud, longitud } : {}),
     });
 

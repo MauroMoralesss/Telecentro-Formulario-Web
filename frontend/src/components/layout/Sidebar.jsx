@@ -15,13 +15,16 @@ export default function Sidebar({ children }) {
             <FiHome size={18} style={{ marginRight: 8 }} />
             Dashboard
           </li>
-          <li onClick={() => navigate("/admin/formularios")}>
+{/*           <li onClick={() => navigate("/admin/formularios")}>
             <FiFileText size={18} style={{ marginRight: 8 }} />
             Formularios
-          </li>
+          </li> */}
           <li onClick={() => navigate("/admin/tecnicos")}>
             <FiUsers size={18} style={{ marginRight: 8 }} />
             Técnicos
+          </li>
+          <li onClick={() => navigate("/dashboard")}>
+            --VIEJO DISEÑO--
           </li>
         </ul>
       </nav>
