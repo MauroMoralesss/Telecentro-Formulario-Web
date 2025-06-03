@@ -4,6 +4,7 @@ import {
   obtenerFormularioPorId,
   actualizarFormulario,
   obtenerFormulariosPorTecnico,
+  editarCamposBasicos as editarCamposBasicosDB
 } from "../models/formularios.model.js";
 
 import {
@@ -18,12 +19,32 @@ import path from "path";
 import fs from "fs/promises";
 import { exec } from "child_process";
 import { promisify } from "util";
+import {
+  crearFormularioSchema,
+  editarCamposBasicosSchema
+} from "../schemas/formularios.schema.js";
 const execAsync = promisify(exec);
 
 // Crear formulario (admin)
 export const crear = async (req, res) => {
   try {
     const formulario = await crearFormulario(req.body);
+    // Registrar historial de creación
+    const { registrarAccion } = await import("../models/historial.model.js");
+    const camposModificados = {};
+    Object.entries(req.body).forEach(([key, value]) => {
+      camposModificados[key] = { anterior: null, nuevo: value };
+    });
+    await registrarAccion({
+      formulario_id: formulario.id_formulario,
+      tecnico_id: req.userId,
+      accion: "Creación",
+      detalles: "Formulario creado",
+      estado_anterior: null,
+      estado_nuevo: formulario.estado || "Iniciado",
+      campos_modificados: camposModificados
+    });
+    res.locals.nuevoFormularioId = formulario.id_formulario;
     res.status(201).json(formulario);
   } catch (error) {
     console.error("Error al crear formulario:", error.message);
@@ -76,11 +97,11 @@ export const cambiarEstado = async (req, res) => {
   });
 
   // Notifico a todos los clientes SSE conectados
-/*   broadcast("formulario-actualizado", {
+  broadcast("formulario-actualizado", {
     id: formulario.id_formulario,
     nro_orden: formulario.nro_orden,
     nuevoEstado: formulario.estado,
-  }); */
+  });
 
   res.json(formulario);
 };
@@ -94,109 +115,176 @@ export const listarDelTecnico = async (req, res) => {
 // Completar formulario (técnico) con compresión previa con FFmpeg
 export const completar = async (req, res) => {
   try {
-    const formulario = await obtenerFormularioPorId(req.params.id);
+    console.log('Iniciando completar formulario...');
+    console.log('Datos recibidos:', {
+      params: req.params,
+      body: req.body,
+      files: req.files
+    });
 
-    if (!formulario) {
+    const { id } = req.params;
+    if (!id) {
+      return res.status(400).json({ message: "ID de formulario requerido" });
+    }
+
+    // Validar que el formulario exista
+    const formularioExistente = await obtenerFormularioPorId(id);
+    if (!formularioExistente) {
       return res.status(404).json({ message: "Formulario no encontrado" });
     }
 
-    if (!["Iniciado", "Rechazado"].includes(formulario.estado)) {
-      return res.status(403).json({
-        message: "Este formulario no puede ser completado en su estado actual",
-      });
-    }
-
-    const files = req.files;
-    let url_interior = null;
-    let url_exterior = null;
-    let url_extra = null;
-
-    const procesarVideo = async (archivo, tipo) => {
-      const inputPath = archivo.path;
-      const { name } = path.parse(inputPath);
-      const outputPath = path.join(
-        path.dirname(inputPath),
-        `${name}-${tipo}-compressed.mp4`
-      );
-
-      console.log(`🎬 ${tipo}: Ruta original:`, inputPath);
-
+    // Procesar videos
+    const procesarVideo = async (file, tipo) => {
+      if (!file) return null;
+      
       try {
+        const inputPath = file.path;
+        const outputPath = inputPath.replace(/\.[^/.]+$/, `-${tipo}-compressed.mp4`);
+        
+        console.log(`🎬 Procesando video ${tipo}:`, inputPath);
+        
+        // Comprimir video con FFmpeg
         await execAsync(
           `ffmpeg -i "${inputPath}" -vf "scale=-2:720" -c:v libx264 -crf 28 -preset veryfast -c:a aac -b:a 128k "${outputPath}"`
         );
+        
+        console.log(`✅ Video ${tipo} comprimido:`, outputPath);
+        
+        // Subir a Cloudinary
+        const result = await cloudinary.uploader.upload(outputPath, {
+          resource_type: "video",
+          folder: "formularios",
+        });
+        
+        // Limpiar archivos temporales
+        await fs.unlink(inputPath);
+        await fs.unlink(outputPath);
+        
+        return result.secure_url;
       } catch (error) {
-        console.error(`❌ Error en compresión FFmpeg: ${error.message}`);
-        throw new Error("Error al procesar el video.");
+        console.error(`Error procesando video ${tipo}:`, error);
+        throw error;
       }
-
-      console.log(`✅ ${tipo}: Comprimido:`, outputPath);
-
-      const result = await cloudinary.uploader.upload(outputPath, {
-        resource_type: "video",
-        folder: "formularios",
-      });
-
-      // 🧹 Limpieza
-      await fs.unlink(inputPath);
-      await fs.unlink(outputPath);
-
-      return result.secure_url;
     };
 
-    try {
-      if (files?.video_interior) {
-        url_interior = await procesarVideo(files.video_interior[0], "interior");
-      }
+    // Procesar todos los videos
+    const [url_video_interior, url_video_exterior, url_video_extra] = await Promise.all([
+      procesarVideo(req.files?.video_interior?.[0], 'interior'),
+      procesarVideo(req.files?.video_exterior?.[0], 'exterior'),
+      procesarVideo(req.files?.video_extra?.[0], 'extra')
+    ]);
 
-      if (files?.video_exterior) {
-        url_exterior = await procesarVideo(files.video_exterior[0], "exterior");
+    // Extraer y validar dispositivos
+    let dispositivos = [];
+    if (req.body.dispositivos) {
+      try {
+        dispositivos = JSON.parse(req.body.dispositivos);
+      } catch (error) {
+        console.error('Error al parsear dispositivos:', error);
+        return res.status(400).json({ 
+          message: "Formato inválido de dispositivos",
+          error: error.message 
+        });
       }
-      if (files?.video_extra) {
-        url_extra = await procesarVideo(files.video_extra[0], "extra");
-      }
-    } catch (err) {
-      console.error("🔥 Error en compresión/subida:", err);
-      return res.status(500).json({ message: "Error al procesar los videos" });
     }
 
-    const dispositivosPayload = req.body.dispositivos
-      ? JSON.parse(req.body.dispositivos)
-      : [];
-
-    await borrarDispositivosPorFormulario(formulario.id_formulario);
-
-    await crearDispositivos(formulario.id_formulario, dispositivosPayload);
-
-    const { motivo_cierre, checklist, observaciones, latitud, longitud } =
-      req.body;
-
-    const actualizado = await actualizarFormulario(req.params.id, {
-      motivo_cierre,
-      checklist,
-      observaciones,
-      url_video_interior: url_interior,
-      url_video_exterior: url_exterior,
-      url_video_extra: url_extra,
+    // Actualizar el formulario con todos los datos
+    const datosActualizacion = {
+      motivo_cierre: req.body.motivo_cierre,
+      checklist: req.body.checklist,
+      observaciones: req.body.observaciones,
       estado: "En revision",
-      motivo_rechazo: null,
-      ...(latitud != null && longitud != null ? { latitud, longitud } : {}),
-    });
+      url_video_interior,
+      url_video_exterior,
+      url_video_extra: url_video_extra || null,
+      latitud: req.body.latitud || null,
+      longitud: req.body.longitud || null
+    };
 
-    const dispositivos = await obtenerDispositivosPorFormulario(
-      formulario.id_formulario
-    );
+    console.log('Datos a actualizar en formulario:', datosActualizacion);
+
+    // Actualizar el formulario
+    const formularioActualizado = await actualizarFormulario(id, datosActualizacion);
+
+    // Actualizar dispositivos
+    if (dispositivos.length > 0) {
+      console.log('Actualizando dispositivos:', dispositivos);
+      await borrarDispositivosPorFormulario(id);
+      await crearDispositivos(id, dispositivos);
+    }
+
+    // Obtener dispositivos actualizados
+    const dispositivosActualizados = await obtenerDispositivosPorFormulario(id);
 
     // —— BROADCAST DE NOTIFICACION ——
     broadcast("formulario-actualizado", {
-      id: actualizado.id_formulario,
-      nro_orden: actualizado.nro_orden,
-      nuevoEstado: actualizado.estado,
+      id: formularioActualizado.id_formulario,
+      nro_orden: formularioActualizado.nro_orden,
+      nuevoEstado: formularioActualizado.estado,
     });
 
-    return res.json({ ...actualizado, dispositivos });
+    // Devolver respuesta
+    res.json({ ...formularioActualizado, dispositivos: dispositivosActualizados });
+
   } catch (error) {
-    console.error("🔥 Error al completar:", error);
-    res.status(500).json({ message: "Error al completar el formulario" });
+    console.error('Error al completar formulario:', error);
+    res.status(500).json({ 
+      message: "Error al completar el formulario",
+      error: error.message 
+    });
+  }
+};
+
+// Editar campos básicos del formulario
+export const editarCamposBasicos = async (req, res) => {
+  if (!req.params.id) {
+    return res.status(400).json({ message: "ID de formulario no proporcionado" });
+  }
+
+  try {
+    // Validar datos con Zod
+    const validatedData = editarCamposBasicosSchema.safeParse(req.body);
+    if (!validatedData.success) {
+      return res.status(400).json({
+        message: "Datos inválidos",
+        errors: validatedData.error.errors
+      });
+    }
+
+    // Verificar si el formulario existe
+    const formularioExistente = await obtenerFormularioPorId(req.params.id);
+    if (!formularioExistente) {
+      return res.status(404).json({ message: "Formulario no encontrado" });
+    }
+
+    // Verificar el estado del formulario
+    if (formularioExistente.estado !== "Iniciado") {
+      return res.status(403).json({
+        message: "Solo se pueden editar formularios en estado 'Iniciado'"
+      });
+    }
+
+    // Preparar datos para actualización
+    const datosActualizacion = {
+      tecnico_id: req.body.tecnico_id,
+      nro_orden: req.body.nro_orden,
+      nro_cliente: req.body.nro_cliente,
+      nombre: req.body.nombre,
+      domicilio: req.body.domicilio,
+      telefono: req.body.telefono,
+      servicios_instalar: req.body.servicios_instalar
+    };
+
+    // Actualizar formulario usando la función del modelo renombrada
+    const formularioActualizado = await editarCamposBasicosDB(req.params.id, datosActualizacion);
+
+    // Enviar respuesta
+    return res.status(200).json(formularioActualizado);
+  } catch (error) {
+    console.error("Error al editar formulario:", error);
+    return res.status(500).json({ 
+      message: "Error al editar formulario",
+      error: error.message 
+    });
   }
 };

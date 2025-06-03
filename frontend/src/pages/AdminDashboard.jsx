@@ -11,9 +11,7 @@ import DatePicker from "react-datepicker";
 import es from "date-fns/locale/es";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
-// react-toastify
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 import "react-datepicker/dist/react-datepicker.css";
 
 import "../styles/global.css";
@@ -37,7 +35,7 @@ export default function AdminDashboard() {
   const estados = [
     "Todos",
     "Iniciado",
-    "En revisión",
+    "En revision",
     "Aprobado",
     "Visto sin validar",
     "Rechazado",
@@ -56,7 +54,7 @@ export default function AdminDashboard() {
   // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/formularios/events`, {
+    const evtSource = new EventSource(`${base}/api/formularios/events`, {
       withCredentials: true,
     });
 
@@ -82,8 +80,8 @@ export default function AdminDashboard() {
       setNotifications((prev) => [nuevaNotif, ...prev]);
 
       // 3. Mostrar toast con botón
-      toast.info(
-        ({ closeToast }) => (
+      toast(
+        (t) => (
           <div>
             📋 <strong>Formulario N° {nro_orden}</strong>
             <br />
@@ -100,15 +98,18 @@ export default function AdminDashboard() {
                 cursor: "pointer",
               }}
               onClick={() => {
-                closeToast();
-                navigate(`/formulario/${id}`);
+                toast.remove(t.id);
+                navigate(`/admin/formulario/${id}`);
               }}
             >
               Ver detalles
             </button>
           </div>
         ),
-        { autoClose: 7000 }
+        {
+          duration: 7000,
+          position: "top-center",
+        }
       );
     });
 
@@ -149,14 +150,6 @@ export default function AdminDashboard() {
         navigate("/login");
       }}
     >
-      {/* ToastContainer para los mensajes push */}
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        newestOnTop
-        closeOnClick
-      />
-
       <div className="date-navigator">
         <button
           className="boton-flecha-fecha"

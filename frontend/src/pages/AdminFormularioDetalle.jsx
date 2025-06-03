@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
 import Layout from "../components/layout/Layout.jsx";
@@ -23,16 +23,20 @@ import {
   FaEdit,
   FaChartBar,
   FaCalendar,
+  FaSpinner,
 } from "react-icons/fa";
 import L from "leaflet"; // Import Leaflet
 
-// react-toastify
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
-import "react-datepicker/dist/react-datepicker.css";
+import toast from "react-hot-toast";
 
 import "../styles/table.css";
 import "../styles/formularios.css";
+import EditarFormularioModal from "../components/layout/editar-formulario-modal";
+import { LoadingState } from "../components/ui/LoadingState";
+import { useFetch } from "../hooks/useFetch";
+import { useHistorial } from "../hooks/useHistorial";
+import { HistorialFormulario } from "../components/layout/historial-formulario";
+import { EstadisticasFormulario } from '../components/EstadisticasFormulario';
 
 export default function AdminFormularioDetalle() {
   const navigate = useNavigate();
@@ -40,188 +44,24 @@ export default function AdminFormularioDetalle() {
 
   // Estado local
   const { id } = useParams();
-  const [formulario, setFormulario] = useState(null);
-  const [tecnico, setTecnico] = useState(null);
+  const { 
+    data: formulario, 
+    isLoading, 
+    error,
+    refetch: fetchForm 
+  } = useFetch(`/formularios/${id}`);
   const [notifications, setNotifications] = useState(() => {
     const stored = localStorage.getItem("notifications");
     return stored ? JSON.parse(stored) : [];
   });
+  const [showEditModal, setShowEditModal] = useState(false);
 
-  // Carga inicial del formulario
-  const fetchForm = async () => {
-    try {
-      const res = await axios.get(`/formularios/${id}`, {
-        withCredentials: true,
-      });
-      setFormulario(res.data);
-      if (res.data.tecnico_id) {
-        const tecnicoRes = await axios.get(`/tecnico/${res.data.tecnico_id}`, {
-          withCredentials: true,
-        });
-        setTecnico(tecnicoRes.data);
-      }
-    } catch (e) {
-      console.error("No pude cargar el formulario", e);
-    }
-  };
-
-  useEffect(() => {
-    fetchForm();
-  }, [id]);
-
-  // 3) SSE: además de avisar, recargamos formulario
-  useEffect(() => {
-    if (usuario?.rol !== "admin") return;
-
-    const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    // Asegúrate de apuntar bien al endpoint de SSE en producción:
-    const evtSource = new EventSource(`${base}/formularios/events`, {
-      withCredentials: true,
-    });
-
-    evtSource.addEventListener("formulario-actualizado", (e) => {
-      const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
-
-      // 1) Actualizar tu listado local de formulario
-      setFormulario(prev =>
-        prev && prev.id_formulario === id
-          ? { ...prev, estado: nuevoEstado }
-          : prev
-      )
-
-      // 2) Agregar la notificación al panel
-      const nuevaNotif = {
-        id: Date.now(),
-        id_formulario: id,
-        mensaje: `Formulario N° ${nro_orden} → ${nuevoEstado}`,
-        fecha: new Date().toISOString(),
-        leido: false,
-      };
-      setNotifications((prev) => [nuevaNotif, ...prev]);
-
-      // 3) Mostrar toast con botón “Ver detalles”
-      toast.info(
-        ({ closeToast }) => (
-          <div style={{ lineHeight: 1.4 }}>
-            📋 <strong>Formulario N° {nro_orden}</strong>
-            <br />
-            Estado: <strong>{nuevoEstado}</strong>
-            <br />
-            <button
-              onClick={() => {
-                closeToast();
-                navigate(`/admin/formulario/${id}`);
-              }}
-              style={{
-                marginTop: 8,
-                background: "#1976d2",
-                color: "white",
-                border: "none",
-                padding: "6px 12px",
-                borderRadius: 4,
-                cursor: "pointer",
-              }}
-            >
-              Ver detalles
-            </button>
-          </div>
-        ),
-        {
-          position: "top-right",
-          autoClose: 8000,
-          closeOnClick: false,
-          pauseOnHover: true,
-        }
-      );
-    });
-
-    return () => {
-      evtSource.close();
-    };
-  }, [usuario, navigate]);
-
-  // Persiste notifs en localStorage
-  useEffect(() => {
-    localStorage.setItem("notifications", JSON.stringify(notifications));
-  }, [notifications]);
-
-  // Resto del v0
-
-  // Estado para el historial de cambios
-  const [historial, setHistorial] = useState([
-    {
-      id: 1,
-      fecha: new Date("2025-05-05T13:28:55.239Z"),
-      usuario: "Sistema",
-      accion: "Creación",
-      detalles: "Formulario creado por el técnico",
-      estadoNuevo: "Pendiente",
-    },
-    {
-      id: 2,
-      fecha: new Date("2025-05-05T14:15:22.000Z"),
-      usuario: "Juan Pérez",
-      accion: "Revisión",
-      detalles: "Primera revisión del formulario",
-      estadoAnterior: "Pendiente",
-      estadoNuevo: "En revisión",
-    },
-    {
-      id: 3,
-      fecha: new Date("2025-05-05T18:45:10.000Z"),
-      usuario: "Ana Gómez",
-      accion: "Edición",
-      detalles: "Actualización de datos del cliente",
-      campos: [
-        {
-          campo: "telefono",
-          valorAnterior: "1145678901",
-          valorNuevo: "1157672755",
-        },
-      ],
-    },
-    {
-      id: 4,
-      fecha: new Date("2025-05-06T01:38:13.984Z"),
-      usuario: "María López",
-      accion: "Rechazo",
-      detalles: "Rechazo por motivo: Test",
-      estadoAnterior: "En revisión",
-      estadoNuevo: "Rechazado",
-    },
-    {
-      id: 5,
-      fecha: new Date("2025-05-06T09:12:33.000Z"),
-      usuario: "Carlos Rodríguez",
-      accion: "Visto",
-      detalles: "Formulario revisado sin validar",
-      estadoAnterior: "Rechazado",
-      estadoNuevo: "Visto",
-    },
-    {
-      id: 6,
-      fecha: new Date("2025-05-07T11:05:22.000Z"),
-      usuario: "Eduardo Martínez",
-      accion: "Edición",
-      detalles: "Actualización de observaciones",
-      campos: [
-        {
-          campo: "observaciones",
-          valorAnterior: "Pendiente de revisión",
-          valorNuevo: "Correccion",
-        },
-      ],
-    },
-    {
-      id: 7,
-      fecha: new Date("2025-05-08T14:30:45.000Z"),
-      usuario: "María López",
-      accion: "Rechazo",
-      detalles: "Rechazo por documentación incompleta",
-      estadoAnterior: "Visto",
-      estadoNuevo: "Rechazado",
-    },
-  ]);
+  const { 
+    historial, 
+    estadisticas, 
+    isLoading: historialLoading, 
+    error: historialError 
+  } = useHistorial(id);
 
   const [activeTab, setActiveTab] = useState("dispositivos");
   const [showRechazarInput, setShowRechazarInput] = useState(false);
@@ -395,11 +235,12 @@ export default function AdminFormularioDetalle() {
   };
 
   if (!formulario) {
-    return <div>Cargando…</div>;
-  }
-
-  if (!tecnico) {
-    return <div>Cargando…</div>;
+    return (
+      <div className="loading-container">
+        <FaSpinner className="spinner" />
+        <p>Cargando formulario...</p>
+      </div>
+    );
   }
 
   const formatDate = (dateString) => {
@@ -508,7 +349,7 @@ export default function AdminFormularioDetalle() {
         { estado: "Visto sin validar" },
         { withCredentials: true }
       );
-      toast.info("🔄 Marcado como visto");
+      toast("🔄 Marcado como visto");
       await fetchForm();
     } catch (err) {
       console.error(err);
@@ -574,7 +415,16 @@ export default function AdminFormularioDetalle() {
   };
 
   // Calcular estadísticas
-  const estadisticas = calcularEstadisticas();
+  const estadisticasCalculadas = calcularEstadisticas();
+
+  const handleUpdate = (formularioActualizado) => {
+    fetchForm();
+    toast.success("Formulario actualizado localmente.");
+  };
+
+  const handleOpenEditModal = () => {
+    setShowEditModal(true);
+  };
 
   return (
     <Layout
@@ -589,25 +439,35 @@ export default function AdminFormularioDetalle() {
         navigate("/login");
       }}
     >
-      {/* ToastContainer para los mensajes push */}
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        newestOnTop
-        closeOnClick
-      />
-      {/* CONTENIDO */}
+      <LoadingState 
+        isLoading={isLoading} 
+        error={error}
+        loadingMessage="Cargando formulario..."
+      >
+        {formulario && (
       <div className="container">
         <div className="header">
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
           <div>
             <h1 className="title">📋 Orden N° {formulario.nro_orden}</h1>
             <p className="subtitle">
-              Nombre Técnico: {tecnico.nombre} | Técnico ID:{" "}
-              {formulario.tecnico_id}
+                    Nombre Técnico: {formulario.tecnico_nombre} | Técnico ID: {formulario.tecnico_id}
             </p>
           </div>
+                <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
+                  {formulario && ["Iniciado", "Rechazado"].includes(formulario.estado) && (
+                    <button 
+                      onClick={handleOpenEditModal}
+                      className="btn btn-secondary"
+                      style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+                    >
+                      <FaEdit /> Editar
+                    </button>
+                  )}
           <div className={`badge badge-${formulario.estado.toLowerCase()}`}>
             {formulario.estado}
+                  </div>
+                </div>
           </div>
         </div>
 
@@ -721,43 +581,43 @@ export default function AdminFormularioDetalle() {
           </div>
         </div>
 
-        <div className="tabs">
           <div className="tabs-list">
             <button
-              className={`tab ${activeTab === "dispositivos" ? "active" : ""}`}
+                className={`tab-button ${activeTab === "dispositivos" ? "active" : ""}`}
               onClick={() => setActiveTab("dispositivos")}
             >
               Dispositivos
             </button>
             <button
-              className={`tab ${activeTab === "videos" ? "active" : ""}`}
+                className={`tab-button ${activeTab === "videos" ? "active" : ""}`}
               onClick={() => setActiveTab("videos")}
             >
               Videos
             </button>
             <button
-              className={`tab ${activeTab === "archivos" ? "active" : ""}`}
+                className={`tab-button ${activeTab === "archivos" ? "active" : ""}`}
               onClick={() => setActiveTab("archivos")}
             >
-              Archivos y Mapa
+                Mapa
             </button>
-        {/*     <button
-              className={`tab ${activeTab === "historial" ? "active" : ""}`}
+            <button
+                className={`tab-button ${activeTab === "historial" ? "active" : ""}`}
               onClick={() => setActiveTab("historial")}
             >
               Historial
             </button>
             <button
-              className={`tab ${activeTab === "estadisticas" ? "active" : ""}`}
+                className={`tab-button ${activeTab === "estadisticas" ? "active" : ""}`}
               onClick={() => setActiveTab("estadisticas")}
             >
               Estadísticas
-            </button> */}
+            </button>
           </div>
 
-          <div className="tab-content">
-            {activeTab === "dispositivos" && (
               <div className="card">
+              <div className="card-content">
+                {activeTab === "dispositivos" && (
+                  <>
                 <div className="card-header">
                   <h2 className="card-title">Dispositivos Instalados</h2>
                   <p className="card-description">
@@ -793,11 +653,11 @@ export default function AdminFormularioDetalle() {
                     </tbody>
                   </table>
                 </div>
-              </div>
+                  </>
             )}
 
             {activeTab === "videos" && (
-              <div className="card">
+                  <>
                 <div className="card-header">
                   <h2 className="card-title">Videos de la Instalación</h2>
                   <p className="card-description">
@@ -852,11 +712,11 @@ export default function AdminFormularioDetalle() {
                       )}
                   </div>
                 </div>
-              </div>
+                  </>
             )}
 
             {activeTab === "archivos" && (
-              <div className="card">
+                  <>
                 <div className="card-header">
                   <h2 className="card-title">Mapa de Ubicación</h2>
                   <p className="card-description">
@@ -880,11 +740,11 @@ export default function AdminFormularioDetalle() {
                     </div>
                   )}
                 </div>
-              </div>
+                  </>
             )}
 
             {activeTab === "historial" && (
-              <div className="card">
+                  <>
                 <div className="card-header">
                   <h2 className="card-title">
                     <FaHistory className="icon" />
@@ -895,91 +755,13 @@ export default function AdminFormularioDetalle() {
                   </p>
                 </div>
                 <div className="card-content">
-                  <div className="historial-container">
-                    <div className="historial-timeline">
-                      {historial.map((item) => (
-                        <div key={item.id} className="historial-item">
-                          <div
-                            className={`historial-icono ${getAccionClass(
-                              item.accion
-                            )}`}
-                          >
-                            {getAccionIcon(item.accion)}
+                      <HistorialFormulario formularioId={id} />
                           </div>
-                          <div className="historial-contenido">
-                            <div className="historial-encabezado">
-                              <h3 className="historial-accion">
-                                {item.accion}
-                              </h3>
-                              <span className="historial-fecha">
-                                <FaClock className="icon-tiny" />
-                                {formatDate(item.fecha)}
-                              </span>
-                            </div>
-                            <p className="historial-usuario">
-                              Por: {item.usuario}
-                            </p>
-                            <p className="historial-detalles">
-                              {item.detalles}
-                            </p>
-
-                            {item.estadoAnterior && item.estadoNuevo && (
-                              <div className="historial-cambio-estado">
-                                <span
-                                  className={`historial-estado estado-${item.estadoAnterior.toLowerCase()}`}
-                                >
-                                  {item.estadoAnterior}
-                                </span>
-                                <span className="historial-flecha">→</span>
-                                <span
-                                  className={`historial-estado estado-${item.estadoNuevo.toLowerCase()}`}
-                                >
-                                  {item.estadoNuevo}
-                                </span>
-                              </div>
-                            )}
-
-                            {item.campos && item.campos.length > 0 && (
-                              <div className="historial-campos">
-                                <h4 className="historial-campos-titulo">
-                                  Campos modificados:
-                                </h4>
-                                <ul className="historial-campos-lista">
-                                  {item.campos.map((campo, index) => (
-                                    <li
-                                      key={index}
-                                      className="historial-campo-item"
-                                    >
-                                      <span className="historial-campo-nombre">
-                                        {campo.campo}:
-                                      </span>
-                                      <div className="historial-campo-valores">
-                                        <span className="historial-campo-anterior">
-                                          {campo.valorAnterior}
-                                        </span>
-                                        <span className="historial-campo-flecha">
-                                          →
-                                        </span>
-                                        <span className="historial-campo-nuevo">
-                                          {campo.valorNuevo}
-                                        </span>
-                                      </div>
-                                    </li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              </div>
+                  </>
             )}
 
             {activeTab === "estadisticas" && (
-              <div className="card">
+                  <>
                 <div className="card-header">
                   <h2 className="card-title">
                     <FaChartBar className="icon" />
@@ -990,567 +772,20 @@ export default function AdminFormularioDetalle() {
                   </p>
                 </div>
                 <div className="card-content">
-                  <div className="estadisticas-tabs">
-                    <button
-                      className={`estadisticas-tab ${
-                        estadisticasTab === "general" ? "active" : ""
-                      }`}
-                      onClick={() => setEstadisticasTab("general")}
-                    >
-                      General
-                    </button>
-                    <button
-                      className={`estadisticas-tab ${
-                        estadisticasTab === "acciones" ? "active" : ""
-                      }`}
-                      onClick={() => setEstadisticasTab("acciones")}
-                    >
-                      Acciones
-                    </button>
-                    <button
-                      className={`estadisticas-tab ${
-                        estadisticasTab === "usuarios" ? "active" : ""
-                      }`}
-                      onClick={() => setEstadisticasTab("usuarios")}
-                    >
-                      Usuarios
-                    </button>
-                    <button
-                      className={`estadisticas-tab ${
-                        estadisticasTab === "tiempo" ? "active" : ""
-                      }`}
-                      onClick={() => setEstadisticasTab("tiempo")}
-                    >
-                      Tiempo
-                    </button>
+                      <LoadingState
+                        isLoading={historialLoading}
+                        error={historialError}
+                        loadingMessage="Cargando estadísticas..."
+                      >
+                        <EstadisticasFormulario estadisticas={estadisticas} />
+                      </LoadingState>
                   </div>
-
-                  {estadisticasTab === "general" && (
-                    <div className="estadisticas-contenido">
-                      <div className="estadisticas-resumen">
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaHistory className="icon" />
-                            <h3>Total de cambios</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {estadisticas.totalCambios}
-                          </div>
-                        </div>
-
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaClock className="icon" />
-                            <h3>Tiempo promedio entre cambios</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {estadisticas.tiempoPromedio.horas}h{" "}
-                            {estadisticas.tiempoPromedio.minutos}m
-                          </div>
-                        </div>
-
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaCalendar className="icon" />
-                            <h3>Primer cambio</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {formatDate(estadisticas.primerCambio.fecha)}
-                          </div>
-                        </div>
-
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaCalendar className="icon" />
-                            <h3>Último cambio</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {formatDate(estadisticas.ultimoCambio.fecha)}
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Distribución de cambios por tipo
-                        </h3>
-                        <div className="grafico-barras">
-                          {Object.entries(estadisticas.accionesPorTipo).map(
-                            ([accion, cantidad], index) => (
-                              <div
-                                key={index}
-                                className="grafico-barra-container"
-                              >
-                                <div className="grafico-barra-etiqueta">
-                                  {accion}
-                                </div>
-                                <div className="grafico-barra-wrapper">
-                                  <div
-                                    className="grafico-barra"
-                                    style={{
-                                      width: `${calcularPorcentaje(
-                                        cantidad,
-                                        getMaxValue(
-                                          estadisticas.accionesPorTipo
-                                        )
-                                      )}%`,
-                                      backgroundColor: getAccionColor(accion),
-                                    }}
-                                  ></div>
-                                  <span className="grafico-barra-valor">
-                                    {cantidad}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Distribución de cambios por estado
-                        </h3>
-                        <div className="grafico-donut-container">
-                          <div className="grafico-donut">
-                            {Object.entries(estadisticas.accionesPorEstado).map(
-                              ([estado, cantidad], index, array) => {
-                                // Calcular el porcentaje y el ángulo para cada segmento
-                                const total = array.reduce(
-                                  (sum, [_, val]) => sum + val,
-                                  0
-                                );
-                                const porcentaje = calcularPorcentaje(
-                                  cantidad,
-                                  total
-                                );
-                                const startAngle = array
-                                  .slice(0, index)
-                                  .reduce(
-                                    (sum, [_, val]) =>
-                                      sum +
-                                      calcularPorcentaje(val, total) * 3.6,
-                                    0
-                                  );
-                                const endAngle = startAngle + porcentaje * 3.6;
-
-                                // Crear el estilo para el segmento del donut
-                                const segmentStyle = {
-                                  "--start-angle": `${startAngle}deg`,
-                                  "--end-angle": `${endAngle}deg`,
-                                  "--color": getEstadoColor(estado),
-                                };
-
-                                return (
-                                  <div
-                                    key={index}
-                                    className="grafico-donut-segmento"
-                                    style={segmentStyle}
-                                  >
-                                    <span className="grafico-donut-tooltip">
-                                      {estado}: {cantidad} (
-                                      {Math.round(porcentaje)}%)
-                                    </span>
-                                  </div>
-                                );
-                              }
-                            )}
-                            <div className="grafico-donut-centro">
-                              <span>
-                                {Object.values(
-                                  estadisticas.accionesPorEstado
-                                ).reduce((a, b) => a + b, 0)}
-                              </span>
-                              <span className="grafico-donut-subtitulo">
-                                cambios de estado
-                              </span>
-                            </div>
-                          </div>
-                          <div className="grafico-leyenda">
-                            {Object.entries(estadisticas.accionesPorEstado).map(
-                              ([estado, cantidad], index) => (
-                                <div
-                                  key={index}
-                                  className="grafico-leyenda-item"
-                                >
-                                  <span
-                                    className="grafico-leyenda-color"
-                                    style={{
-                                      backgroundColor: getEstadoColor(estado),
-                                    }}
-                                  ></span>
-                                  <span className="grafico-leyenda-texto">
-                                    {estado}: {cantidad}
-                                  </span>
-                                </div>
-                              )
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {estadisticasTab === "acciones" && (
-                    <div className="estadisticas-contenido">
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Distribución de acciones por tipo
-                        </h3>
-                        <div className="grafico-barras">
-                          {Object.entries(estadisticas.accionesPorTipo).map(
-                            ([accion, cantidad], index) => (
-                              <div
-                                key={index}
-                                className="grafico-barra-container"
-                              >
-                                <div className="grafico-barra-etiqueta">
-                                  {accion}
-                                </div>
-                                <div className="grafico-barra-wrapper">
-                                  <div
-                                    className="grafico-barra"
-                                    style={{
-                                      width: `${calcularPorcentaje(
-                                        cantidad,
-                                        getMaxValue(
-                                          estadisticas.accionesPorTipo
-                                        )
-                                      )}%`,
-                                      backgroundColor: getAccionColor(accion),
-                                    }}
-                                  ></div>
-                                  <span className="grafico-barra-valor">
-                                    {cantidad}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Campos más modificados
-                        </h3>
-                        {Object.keys(estadisticas.camposMasModificados).length >
-                        0 ? (
-                          <div className="grafico-barras">
-                            {Object.entries(
-                              estadisticas.camposMasModificados
-                            ).map(([campo, cantidad], index) => (
-                              <div
-                                key={index}
-                                className="grafico-barra-container"
-                              >
-                                <div className="grafico-barra-etiqueta">
-                                  {campo}
-                                </div>
-                                <div className="grafico-barra-wrapper">
-                                  <div
-                                    className="grafico-barra"
-                                    style={{
-                                      width: `${calcularPorcentaje(
-                                        cantidad,
-                                        getMaxValue(
-                                          estadisticas.camposMasModificados
-                                        )
-                                      )}%`,
-                                      backgroundColor: "#8b5cf6",
-                                    }}
-                                  ></div>
-                                  <span className="grafico-barra-valor">
-                                    {cantidad}
-                                  </span>
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <p className="estadisticas-no-data">
-                            No hay datos de campos modificados
-                          </p>
-                        )}
-                      </div>
-
-                      <div className="estadisticas-tabla">
-                        <h3 className="estadisticas-titulo">
-                          Últimas acciones realizadas
-                        </h3>
-                        <table className="table">
-                          <thead>
-                            <tr>
-                              <th>Fecha</th>
-                              <th>Acción</th>
-                              <th>Usuario</th>
-                              <th>Detalles</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {historial
-                              .slice()
-                              .reverse()
-                              .slice(0, 5)
-                              .map((item) => (
-                                <tr key={item.id}>
-                                  <td>{formatDate(item.fecha)}</td>
-                                  <td>
-                                    <span
-                                      className="accion-badge"
-                                      style={{
-                                        backgroundColor: getAccionColor(
-                                          item.accion
-                                        ),
-                                      }}
-                                    >
-                                      {item.accion}
-                                    </span>
-                                  </td>
-                                  <td>{item.usuario}</td>
-                                  <td>{item.detalles}</td>
-                                </tr>
-                              ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {estadisticasTab === "usuarios" && (
-                    <div className="estadisticas-contenido">
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Distribución de cambios por usuario
-                        </h3>
-                        <div className="grafico-barras">
-                          {Object.entries(estadisticas.accionesPorUsuario).map(
-                            ([usuario, cantidad], index) => (
-                              <div
-                                key={index}
-                                className="grafico-barra-container"
-                              >
-                                <div className="grafico-barra-etiqueta">
-                                  {usuario}
-                                </div>
-                                <div className="grafico-barra-wrapper">
-                                  <div
-                                    className="grafico-barra"
-                                    style={{
-                                      width: `${calcularPorcentaje(
-                                        cantidad,
-                                        getMaxValue(
-                                          estadisticas.accionesPorUsuario
-                                        )
-                                      )}%`,
-                                      backgroundColor: "#3b82f6",
-                                    }}
-                                  ></div>
-                                  <span className="grafico-barra-valor">
-                                    {cantidad}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-tabla">
-                        <h3 className="estadisticas-titulo">
-                          Actividad por usuario
-                        </h3>
-                        <table className="table">
-                          <thead>
-                            <tr>
-                              <th>Usuario</th>
-                              <th>Total de acciones</th>
-                              <th>Última acción</th>
-                              <th>Tipo de acciones</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {Object.entries(
-                              estadisticas.accionesPorUsuario
-                            ).map(([usuario, cantidad], index) => {
-                              // Encontrar la última acción del usuario
-                              const ultimaAccion = [...historial]
-                                .reverse()
-                                .find((item) => item.usuario === usuario);
-
-                              // Contar tipos de acciones por usuario
-                              const accionesPorTipo = historial
-                                .filter((item) => item.usuario === usuario)
-                                .reduce((acc, item) => {
-                                  acc[item.accion] =
-                                    (acc[item.accion] || 0) + 1;
-                                  return acc;
-                                }, {});
-
-                              return (
-                                <tr key={index}>
-                                  <td>{usuario}</td>
-                                  <td>{cantidad}</td>
-                                  <td>
-                                    {ultimaAccion
-                                      ? formatDate(ultimaAccion.fecha)
-                                      : "N/A"}
-                                  </td>
-                                  <td>
-                                    <div className="acciones-tipo-lista">
-                                      {Object.entries(accionesPorTipo).map(
-                                        ([accion, cant], i) => (
-                                          <span
-                                            key={i}
-                                            className="accion-badge"
-                                            style={{
-                                              backgroundColor:
-                                                getAccionColor(accion),
-                                            }}
-                                          >
-                                            {accion}: {cant}
-                                          </span>
-                                        )
-                                      )}
-                                    </div>
-                                  </td>
-                                </tr>
-                              );
-                            })}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
-
-                  {estadisticasTab === "tiempo" && (
-                    <div className="estadisticas-contenido">
-                      <div className="estadisticas-distribucion">
-                        <h3 className="estadisticas-titulo">
-                          Distribución de cambios por día
-                        </h3>
-                        <div className="grafico-barras">
-                          {Object.entries(estadisticas.accionesPorDia).map(
-                            ([dia, cantidad], index) => (
-                              <div
-                                key={index}
-                                className="grafico-barra-container"
-                              >
-                                <div className="grafico-barra-etiqueta">
-                                  {dia}
-                                </div>
-                                <div className="grafico-barra-wrapper">
-                                  <div
-                                    className="grafico-barra"
-                                    style={{
-                                      width: `${calcularPorcentaje(
-                                        cantidad,
-                                        getMaxValue(estadisticas.accionesPorDia)
-                                      )}%`,
-                                      backgroundColor: "#10b981",
-                                    }}
-                                  ></div>
-                                  <span className="grafico-barra-valor">
-                                    {cantidad}
-                                  </span>
-                                </div>
-                              </div>
-                            )
-                          )}
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-timeline">
-                        <h3 className="estadisticas-titulo">
-                          Línea de tiempo de cambios
-                        </h3>
-                        <div className="timeline-container">
-                          <div className="timeline-line"></div>
-                          {historial.map((item, index) => {
-                            // Calcular la posición relativa en la línea de tiempo
-                            const primerFecha = new Date(
-                              historial[0].fecha
-                            ).getTime();
-                            const ultimaFecha = new Date(
-                              historial[historial.length - 1].fecha
-                            ).getTime();
-                            const itemFecha = new Date(item.fecha).getTime();
-                            const posicion =
-                              ((itemFecha - primerFecha) /
-                                (ultimaFecha - primerFecha)) *
-                              100;
-
-                            return (
-                              <div
-                                key={index}
-                                className="timeline-punto"
-                                style={{
-                                  left: `${posicion}%`,
-                                  backgroundColor: getAccionColor(item.accion),
-                                }}
-                                title={`${item.accion} - ${formatDate(
-                                  item.fecha
-                                )}`}
-                              >
-                                <div className="timeline-tooltip">
-                                  <strong>{item.accion}</strong>
-                                  <br />
-                                  {formatDate(item.fecha)}
-                                  <br />
-                                  Por: {item.usuario}
-                                </div>
-                              </div>
-                            );
-                          })}
-                          <div className="timeline-fechas">
-                            <span>{formatDate(historial[0].fecha)}</span>
-                            <span>
-                              {formatDate(
-                                historial[historial.length - 1].fecha
-                              )}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="estadisticas-cards-container">
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaClock className="icon" />
-                            <h3>Tiempo promedio entre cambios</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {estadisticas.tiempoPromedio.horas}h{" "}
-                            {estadisticas.tiempoPromedio.minutos}m
-                          </div>
-                        </div>
-
-                        <div className="estadisticas-card">
-                          <div className="estadisticas-card-header">
-                            <FaCalendar className="icon" />
-                            <h3>Duración total del proceso</h3>
-                          </div>
-                          <div className="estadisticas-card-valor">
-                            {Math.floor(
-                              (new Date(
-                                historial[historial.length - 1].fecha
-                              ).getTime() -
-                                new Date(historial[0].fecha).getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )}{" "}
-                            días
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+                  </>
             )}
           </div>
         </div>
         {usuario?.rol === "admin" &&
-          !["Aprobado", "Rechazado"].includes(formulario.estado) && (
+          ["En revision", "Visto sin validar"].includes(formulario.estado) && (
             <div className="action-buttons">
               <button onClick={handleAprobar} className="btn btn-success">
                 Aprobar formulario
@@ -1622,30 +857,6 @@ export default function AdminFormularioDetalle() {
               </div>
             </div>
 
-            {/* <div className="rechazo-campo">
-              <label htmlFor="detalles-rechazo" className="rechazo-label">
-                Detalles adicionales:
-              </label>
-              <textarea
-                id="detalles-rechazo"
-                className={`rechazo-input ${
-                  errores.detalles ? "input-error" : ""
-                }`}
-                value={rechazoData.detalles}
-                onChange={(e) =>
-                  setRechazoData({ ...rechazoData, detalles: e.target.value })
-                }
-                placeholder="Proporcione detalles específicos sobre el problema (mínimo 20 caracteres)"
-                rows={3}
-              ></textarea>
-              {errores.detalles && (
-                <p className="mensaje-error">{errores.detalles}</p>
-              )}
-              <div className="contador-caracteres">
-                {rechazoData.detalles.length} / 20 caracteres mínimos
-              </div>
-            </div> */}
-
             <div className="rechazo-campo checkbox-container">
               <label className="checkbox-label">
                 <input
@@ -1689,7 +900,17 @@ export default function AdminFormularioDetalle() {
             </div>
           </div>
         )}
+
+            {showEditModal && (
+              <EditarFormularioModal
+                formulario={formulario}
+                onClose={() => setShowEditModal(false)}
+                onUpdate={handleUpdate}
+              />
+            )}
       </div>
+        )}
+      </LoadingState>
     </Layout>
   );
 }

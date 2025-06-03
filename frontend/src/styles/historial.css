@@ -1,0 +1,145 @@
+.historial-container {
+  padding: 1rem;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.historial-item {
+  padding: 1rem;
+  border-left: 3px solid #3b82f6;
+  margin-bottom: 1rem;
+  background-color: #f8fafc;
+  border-radius: 0 8px 8px 0;
+  transition: all 0.3s ease;
+}
+
+.historial-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.historial-header {
+  margin-bottom: 1rem;
+}
+
+.historial-titulo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.5rem;
+}
+
+.historial-titulo h4 {
+  margin: 0;
+  color: #1e40af;
+  font-weight: 600;
+}
+
+.fecha {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.historial-usuario {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.icon-small {
+  font-size: 1rem;
+  color: #64748b;
+}
+
+.campos-modificados {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background-color: white;
+  border-radius: 6px;
+  border: 1px solid #e2e8f0;
+}
+
+.campo-modificado {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.campo-nombre {
+  font-weight: 500;
+  color: #475569;
+  font-size: 0.875rem;
+}
+
+.campo-valores {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-left: 1rem;
+  font-size: 0.875rem;
+}
+
+.valor-anterior {
+  color: #dc2626;
+  text-decoration: line-through;
+  background-color: #fef2f2;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.valor-nuevo {
+  color: #059669;
+  background-color: #f0fdf4;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+}
+
+.flecha {
+  color: #64748b;
+  font-weight: bold;
+}
+
+/* Estilos para diferentes tipos de acciones */
+.historial-item.creacion {
+  border-left-color: #3b82f6; /* Azul */
+}
+
+.historial-item.edicion {
+  border-left-color: #8b5cf6; /* Púrpura */
+}
+
+.historial-item.completar {
+  border-left-color: #10b981; /* Verde */
+}
+
+.historial-item.rechazo {
+  border-left-color: #ef4444; /* Rojo */
+}
+
+.historial-item.revision {
+  border-left-color: #f59e0b; /* Amarillo */
+}
+
+/* Animaciones */
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.historial-item {
+  animation: slideIn 0.3s ease-out;
+} 

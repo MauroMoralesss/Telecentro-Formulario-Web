@@ -5,125 +5,360 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.4);
     display: flex;
-    align-items: center;
     justify-content: center;
+    align-items: center;
     z-index: 1000;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
-  }
-  
-  .modal-overlay.active {
-    opacity: 1;
-    visibility: visible;
-  }
-  
-  .modal-container {
-    background-color: white;
-    border-radius: 8px;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-    width: 90%;
-    max-width: 600px;
+}
+
+.modal-content {
+    background: white;
+    padding: 32px;
+    border-radius: 16px;
+    width: 95%;
+    max-width: 700px;
     max-height: 90vh;
     overflow-y: auto;
-    padding: 20px;
     position: relative;
-    transform: translateY(-20px);
-    transition: transform 0.3s ease;
-  }
-  
-  .modal-overlay.active .modal-container {
-    transform: translateY(0);
-  }
-  
-  .modal-header {
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 10px;
-    border-bottom: 1px solid #eee;
-  }
-  
-  .modal-title {
-    font-size: 1.5rem;
-    color: #0066cc;
+    margin-bottom: 32px;
+}
+
+.modal-header h2 {
     margin: 0;
-  }
-  
-  .modal-close {
-    background: none;
-    border: none;
     font-size: 1.5rem;
+    color: #1a1a1a;
+    font-weight: 600;
+}
+
+.close-button {
+    position: absolute;
+    right: 24px;
+    top: 24px;
+    background: transparent;
+    border: none;
+    font-size: 24px;
     cursor: pointer;
     color: #666;
-    transition: color 0.2s;
-  }
-  
-  .modal-close:hover {
-    color: #ff3333;
-  }
-  
-  /* Estilos para los formularios dentro de los modales */
-  .form-card {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    padding: 4px;
+}
+
+.close-button:hover {
+    color: #1a1a1a;
+}
+
+/* Estilos para el formulario dentro del modal */
+.modal-content .form-card {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.modal-content .form-card > div {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-  }
-  
-  .form-card label {
+    gap: 8px;
+}
+
+.modal-content .form-card label {
+    display: block;
+    color: #374151;
     font-weight: 500;
-    margin-bottom: -8px;
-  }
-  
-  .form-card input,
-  .form-card textarea {
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-  }
-  
-  .form-card input:focus,
-  .form-card textarea:focus {
-    outline: none;
-    border-color: #0066cc;
-    box-shadow: 0 0 0 2px rgba(0, 102, 204, 0.2);
-  }
-  
-  .btn {
+    font-size: 0.9rem;
+    margin: 0;
+}
+
+.modal-content .form-card input,
+.modal-content .form-card select,
+.modal-content .form-card textarea {
+    width: 100%;
     padding: 10px 16px;
+    margin: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    background: #f9fafb;
+    transition: all 0.2s ease;
+}
+
+.modal-content .form-card input:focus,
+.modal-content .form-card select:focus,
+.modal-content .form-card textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+.modal-content .form-card input::placeholder,
+.modal-content .form-card select::placeholder,
+.modal-content .form-card textarea::placeholder {
+    color: #9ca3af;
+}
+
+/* Estilos para react-select */
+.modal-content .css-13cymwt-control {
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    min-height: 38px;
+    margin: 0;
+    box-shadow: none;
+}
+
+.modal-content .css-13cymwt-control:hover {
+    border-color: #2563eb;
+}
+
+.modal-content .css-t3ipsp-control {
+    background: white !important;
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+}
+
+.modal-content .css-1dimb5e-singleValue {
+    color: #1f2937;
+}
+
+.modal-content .css-1nmdiq5-menu {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-top: 4px;
+}
+
+.modal-content .css-1n6sfyn-MenuList {
+    padding: 4px;
+}
+
+.modal-content .css-1n7v3ny-option {
+    background-color: #2563eb !important;
+    color: white;
+}
+
+.modal-content .css-9gakcf-option:active {
+    background-color: #1d4ed8 !important;
+}
+
+.modal-content .css-1pahdxg-control {
+    border-color: #2563eb !important;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* Botones */
+.modal-actions {
+    grid-column: 1 / -1;
+    margin-top: 32px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+}
+
+.btn {
+    padding: 10px 20px;
     border: none;
-    border-radius: 4px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
-    transition: background-color 0.2s;
-  }
-  
-  .btn-primary {
-    background-color: #0066cc;
+    font-size: 0.95rem;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-primary {
+    background-color: #2563eb;
     color: white;
-  }
-  
-  .btn-primary:hover {
-    background-color: #0055aa;
-  }
-  
-  .alert-error {
-    background-color: #ffebee;
-    color: #d32f2f;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
-  
-  .alert-success {
-    background-color: #e8f5e9;
-    color: #2e7d32;
-    padding: 10px;
-    border-radius: 4px;
-    margin-bottom: 16px;
-  }
+}
+
+.btn-primary:hover {
+    background-color: #1d4ed8;
+    transform: translateY(-1px);
+}
+
+.btn-secondary {
+    background-color: #ef4444;
+    color: white;
+}
+
+.btn-secondary:hover {
+    background-color: #dc2626;
+    transform: translateY(-1px);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* Alertas */
+.alert-error {
+    background-color: #fef2f2;
+    color: #dc2626;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #fecaca;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.alert-success {
+    background-color: #f0fdf4;
+    color: #16a34a;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    border: 1px solid #bbf7d0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+/* Scrollbar personalizada */
+.modal-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+    background: #d1d5db;
+    border-radius: 3px;
+}
+
+.modal-content::-webkit-scrollbar-thumb:hover {
+    background: #9ca3af;
+}
+
+/* Los campos que deben ocupar todo el ancho */
+.modal-content .form-card .full-width,
+.modal-content .form-card textarea,
+.modal-content .form-card .css-b62m3t-container {
+    grid-column: 1 / -1;
+}
+
+.modal-content .form-card textarea {
+    min-height: 38px;
+    max-height: 200px;
+    line-height: 1.5;
+    padding: 12px 16px;
+    resize: none;
+    overflow-y: hidden;
+    transition: all 0.2s ease;
+    font-family: inherit;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    width: 100%;
+}
+
+.modal-content .form-card textarea:focus {
+    outline: none;
+    border-color: #2563eb;
+    background: white;
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+}
+
+/* Ajuste para el grid en el modal de edición */
+.modal-content .form-card {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 24px;
+}
+
+.modal-content .form-card > div {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-content .form-card .full-width {
+    grid-column: 1 / -1;
+}
+
+/* Ajustes específicos para el modal de edición */
+.modal-content .form-card .select-container {
+    grid-column: 1 / -1;
+    margin-bottom: 8px;
+}
+
+.modal-content .form-card .textarea-container {
+    grid-column: 1 / -1;
+}
+
+.modal-content .form-card .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.modal-content .form-card .input-group label {
+    color: #374151;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+/* Estilos para estados de error */
+.input-error {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.error-message {
+    color: #ef4444;
+    font-size: 0.8rem;
+    margin-top: 4px;
+}
+
+/* Spinner de carga */
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.spinner {
+    animation: spin 1s linear infinite;
+    margin-right: 8px;
+}
+
+/* Estilos para botones deshabilitados */
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    pointer-events: none;
+}
+
+/* Ajuste para el Select en estado de error */
+.input-error .css-13cymwt-control {
+    border-color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+}
+
+.input-error .css-13cymwt-control:hover {
+    border-color: #dc2626 !important;
+}
   

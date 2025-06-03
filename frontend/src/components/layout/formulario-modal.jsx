@@ -50,10 +50,8 @@ function FormularioModal({ onClose }) {
       await axios.post("/formularios", form, { withCredentials: true });
       setSuccessMsg("Formulario creado correctamente");
 
-      // Cerrar el modal después de 2 segundos
       setTimeout(() => {
         onClose();
-        // Opcional: recargar datos en el dashboard
         navigate("/admin/dashboard", { replace: true });
       }, 2000);
     } catch (error) {
@@ -63,60 +61,75 @@ function FormularioModal({ onClose }) {
   };
 
   const autoResize = (e) => {
-    e.target.style.height = "auto"; // reset por si achica
+    e.target.style.height = "auto";
     e.target.style.height = `${e.target.scrollHeight}px`;
   };
 
   return (
     <div>
       <form className="form-card" onSubmit={handleSubmit}>
-        <label>Técnico:</label>
-        <Select
-          options={opciones}
-          onChange={(opcion) => setForm({ ...form, tecnico_id: opcion.value })}
-          placeholder="Seleccionar técnico..."
-          isSearchable
-          styles={{ menu: (base) => ({ ...base, zIndex: 999 }) }}
-        />
+        <div className="full-width">
+          <label>Técnico:</label>
+          <Select
+            options={opciones}
+            onChange={(opcion) => setForm({ ...form, tecnico_id: opcion.value })}
+            placeholder="Seleccionar técnico..."
+            isSearchable
+            styles={{ menu: (base) => ({ ...base, zIndex: 999 }) }}
+          />
+        </div>
 
-        <label>Nro Orden:</label>
-        <input name="nro_orden" onChange={handleChange} required />
+        <div>
+          <label>Nro Orden:</label>
+          <input name="nro_orden" onChange={handleChange} required />
+        </div>
 
-        <label>Nro Cliente:</label>
-        <input name="nro_cliente" onChange={handleChange} required />
+        <div>
+          <label>Nro Cliente:</label>
+          <input name="nro_cliente" onChange={handleChange} required />
+        </div>
 
-        <label>Nombre:</label>
-        <input name="nombre" onChange={handleChange} required />
+        <div>
+          <label>Nombre:</label>
+          <input name="nombre" onChange={handleChange} required />
+        </div>
 
-        <label>Domicilio:</label>
-        <input name="domicilio" onChange={handleChange} required />
+        <div>
+          <label>Domicilio:</label>
+          <input name="domicilio" onChange={handleChange} required />
+        </div>
 
-        <label>Teléfono:</label>
-        <input
-          name="telefono"
-          type="tel"
-          onChange={handleChange}
-          required
-          pattern="[0-9]{8,20}"
-          title="Solo números entre 8 y 20 dígitos"
-        />
-        <label htmlFor="servicios_instalar">Servicios a Instalar:</label>
-        <textarea
-          name="servicios_instalar"
-          value={form.servicios_instalar}
-          onChange={(e) => {
-            handleChange(e);
-            autoResize(e);
-          }}
-          placeholder="Ej: ABONO TELEFONIA 75388999 (COMUN SITIO WEB)"
-          rows={1} // arranca con una fila mínima
-          style={{ overflow: "hidden", resize: "none" }}
-        />
+        <div>
+          <label>Teléfono:</label>
+          <input
+            name="telefono"
+            type="tel"
+            onChange={handleChange}
+            required
+            pattern="[0-9]{8,20}"
+            title="Solo números entre 8 y 20 dígitos"
+          />
+        </div>
+
+        <div className="full-width">
+          <label>Servicios a Instalar:</label>
+          <textarea
+            name="servicios_instalar"
+            value={form.servicios_instalar}
+            onChange={(e) => {
+              handleChange(e);
+              autoResize(e);
+            }}
+            placeholder="Ej: ABONO TELEFONIA 75388999 (COMUN SITIO WEB)"
+            rows={1}
+            style={{ overflow: "hidden", resize: "none" }}
+          />
+        </div>
 
         <div className="modal-actions">
           {errorMsg && <div className="alert-error">⚠️ {errorMsg}</div>}
           {successMsg && <div className="alert-success">✅ {successMsg}</div>}
-          <button type="button" className="btn" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary">

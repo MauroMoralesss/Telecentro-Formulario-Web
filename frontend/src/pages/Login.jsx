@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import axios from "../api/axios.js";       // opcional: podés usar login de contexto
 import { useAuth } from "../context/AuthContext.jsx";
+import { useFetch } from '../hooks/useFetch';
 
 function Login() {
   const [id_tecnico, setIdTecnico] = useState("");
@@ -23,13 +24,13 @@ function Login() {
 
       // redirijo según rol (el back devuelve "rol": "admin" o "tecnico") - navigate("/admin/dashboard");
       if (usuario.rol === "admin") {
-        navigate("/dashboard");
+        navigate("/admin/dashboard");
       } else {
         navigate("/dashboard");
       }
     } catch (err) {
       setError(err.response?.data?.message || "Error al iniciar sesión");
-    }
+    } 
   };
 
   return (

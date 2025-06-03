@@ -77,7 +77,7 @@ function TecnicoModal({ onClose }) {
         <div className="modal-actions">
           {errorMsg && <div className="alert-error">⚠️ {errorMsg}</div>}
           {successMsg && <div className="alert-success">✅ {successMsg}</div>}
-          <button type="button" className="btn" onClick={onClose}>
+          <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancelar
           </button>
           <button type="submit" className="btn btn-primary">

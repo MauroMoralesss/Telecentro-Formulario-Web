@@ -15,9 +15,7 @@ import {
   FaArrowRight,
 } from "react-icons/fa";
 
-// react-toastify
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 import "react-datepicker/dist/react-datepicker.css";
 
 import "../styles/global.css";
@@ -57,7 +55,7 @@ export default function AdminTecnicos() {
   // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/formularios/events`, {
+    const evtSource = new EventSource(`${base}/api/formularios/events`, {
       withCredentials: true,
     });
 
@@ -76,8 +74,8 @@ export default function AdminTecnicos() {
       setNotifications((prev) => [nuevaNotif, ...prev]);
 
       // 3. Mostrar toast con botón
-      toast.info(
-        ({ closeToast }) => (
+      toast(
+        (t) => (
           <div>
             📋 <strong>Formulario N° {nro_orden}</strong>
             <br />
@@ -94,15 +92,18 @@ export default function AdminTecnicos() {
                 cursor: "pointer",
               }}
               onClick={() => {
-                closeToast();
-                navigate(`/formulario/${id}`);
+                toast.remove(t.id);
+                navigate(`/admin/formulario/${id}`);
               }}
             >
               Ver detalles
             </button>
           </div>
         ),
-        { autoClose: 7000 }
+        {
+          duration: 7000,
+          position: "top-center",
+        }
       );
     });
 
@@ -162,14 +163,6 @@ export default function AdminTecnicos() {
         navigate("/login");
       }}
     >
-      {/* ToastContainer para los mensajes push */}
-      <ToastContainer
-        position="top-center"
-        autoClose={5000}
-        newestOnTop
-        closeOnClick
-      />
-
       <div className="tecnicos-view-container">
         <div className="tecnicos-header">
           <h1>Lista de Técnicos</h1>

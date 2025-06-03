@@ -7,8 +7,7 @@ import axios from "../api/axios.js";
 import FormularioCard from "../components/FormularioCard";
 import FiltrosAvanzados from "../components/FiltrosAvanzados";
 
-import { ToastContainer, toast } from "react-toastify";
-import "react-toastify/dist/ReactToastify.css";
+import toast from "react-hot-toast";
 import "../styles/dashboard.css";
 import NotificationsPanel from "../components/ui/NotificationsPanel.jsx";
 
@@ -55,7 +54,7 @@ function Dashboard() {
     if (usuario?.rol !== "admin") return;
 
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/formularios/events`, {
+    const evtSource = new EventSource(`${base}/api/formularios/events`, {
       withCredentials: true,
     });
 
@@ -81,8 +80,8 @@ function Dashboard() {
       setNotifications((prev) => [nuevaNotif, ...prev]);
 
       // 3. Mostrar toast con botón
-      toast.info(
-        ({ closeToast }) => (
+      toast(
+        (t) => (
           <div>
             📋 <strong>Formulario N° {nro_orden}</strong>
             <br />
@@ -99,7 +98,7 @@ function Dashboard() {
                 cursor: "pointer",
               }}
               onClick={() => {
-                closeToast();
+                t.remove();
                 navigate(`/formulario/${id}`);
               }}
             >
@@ -107,7 +106,10 @@ function Dashboard() {
             </button>
           </div>
         ),
-        { autoClose: 7000 }
+        {
+          duration: 7000,
+          position: "top-center",
+        }
       );
     });
 
@@ -261,15 +263,6 @@ function Dashboard() {
           </>
         )}
       </div>
-      <ToastContainer
-        position="top-center"
-        autoClose={3000}
-        hideProgressBar={false}
-        newestOnTop
-        closeOnClick
-        rtl={false}
-        pauseOnHover
-      />
     </div>
   );
 }

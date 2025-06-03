@@ -100,3 +100,23 @@ CREATE TABLE public.dispositivo (
 ALTER TABLE dispositivo DROP CONSTRAINT dispositivo_formulario_id_key;
 
 ALTER TABLE formulario ADD COLUMN url_video_extra TEXT;
+
+-- Tabla para el historial de formularios
+CREATE TABLE IF NOT EXISTS historial_formulario (
+  id_historial SERIAL PRIMARY KEY,
+  formulario_id INTEGER REFERENCES formulario(id_formulario),
+  tecnico_id INTEGER REFERENCES tecnicos(id_tecnico),
+  fecha_accion TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+  accion VARCHAR(50) NOT NULL,
+  detalles TEXT,
+  estado_anterior VARCHAR(50),
+  estado_nuevo VARCHAR(50),
+  campos_modificados JSONB
+);
+
+-- Índices para mejorar el rendimiento
+CREATE INDEX IF NOT EXISTS idx_historial_formulario_id ON historial_formulario(formulario_id);
+CREATE INDEX IF NOT EXISTS idx_historial_tecnico_id ON historial_formulario(tecnico_id);
+CREATE INDEX IF NOT EXISTS idx_historial_fecha ON historial_formulario(fecha_accion);
+
+ALTER TYPE motivo_cierre_enum ADD VALUE 'Instalación cableada sin terminar';

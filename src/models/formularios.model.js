@@ -39,7 +39,10 @@ export const obtenerTodosFormularios = async () => {
 
 export const obtenerFormularioPorId = async (id) => {
   const result = await pool.query(
-    `SELECT * FROM formulario WHERE id_formulario = $1`,
+    `SELECT f.*, t.nombre as tecnico_nombre, t.email as tecnico_email 
+     FROM formulario f
+     LEFT JOIN tecnicos t ON f.tecnico_id = t.id_tecnico
+     WHERE f.id_formulario = $1`,
     [id]
   );
   return result.rows[0];
@@ -76,4 +79,57 @@ export const obtenerFormulariosPorTecnico = async (tecnico_id) => {
     [tecnico_id]
   );
   return result.rows;
+};
+
+/**
+ * Actualiza los campos básicos de un formulario
+ * @param {number} id_formulario - ID del formulario a actualizar
+ * @param {Object} datos - Datos a actualizar
+ * @returns {Promise<Object>} Formulario actualizado
+ */
+export const editarCamposBasicos = async (id_formulario, datos) => {
+  if (!id_formulario) {
+    throw new Error('ID de formulario es requerido');
+  }
+
+  try {
+    const query = `
+      UPDATE formulario SET 
+        tecnico_id = $1,
+        nro_orden = $2,
+        nro_cliente = $3,
+        nombre = $4,
+        domicilio = $5,
+        telefono = $6,
+        servicios_instalar = $7,
+        fecha_modificacion = CURRENT_TIMESTAMP
+      WHERE id_formulario = $8 
+      RETURNING *
+    `;
+
+    const values = [
+      datos.tecnico_id,
+      datos.nro_orden,
+      datos.nro_cliente,
+      datos.nombre,
+      datos.domicilio,
+      datos.telefono,
+      datos.servicios_instalar,
+      id_formulario
+    ];
+
+    const result = await pool.query(query, values);
+
+    if (result.rows.length === 0) {
+      throw new Error(`No se encontró el formulario con ID ${id_formulario}`);
+    }
+
+    return result.rows[0];
+  } catch (error) {
+    console.error('Error en editarCamposBasicos:', error);
+    if (error.code === '23505') { // Error de duplicación
+      throw new Error('Ya existe un formulario con ese número de orden');
+    }
+    throw error;
+  }
 };
