@@ -22,6 +22,7 @@ import FormularioDetalle from "./pages/FormularioDetalle";
 import CrearFormulario from "./pages/CrearFormulario";
 import TecnicoPerfil from "./pages/TecnicoPerfil";
 import TecnicosAdmin from "./pages/TecnicosAdmin";
+import SeleccionarContratista from "./pages/SeleccionarContratista.jsx";
 
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
@@ -31,21 +32,26 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Routes>
           {/* Landing page pública */}
           <Route path="/" element={<LandingPage />} />
-          {/* Ruta de login */}
-          <Route path="/login" element={<Login />} />
-          {/* todas estas rutas quedan "dentro" de ProtectedRoute */}
-          <Route element={<ProtectedRoute />}>
-            <Route path="/home" element={<RoleRedirect />} />  
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/formulario/:id" element={<FormularioDetalle />} />
-            <Route path="/crear-formulario" element={<CrearFormulario />} />
-            <Route path="/tecnico/:id" element={<TecnicoPerfil />} />
-            <Route path="/tecnicos" element={<TecnicosAdmin />} />
-            {/* dashboard de admin también protegido */}
-            <Route path="/admin/dashboard" element={<AdminDashboard />} />
-            <Route path="/admin/tecnicos" element={<AdminTecnicos />} />
-            <Route path="/admin/formulario/:id" element={<AdminFormularioDetalle />} />
+          <Route path="/contratistas" element={<SeleccionarContratista />} />
+          
+          {/* Rutas específicas por contratista */}
+          <Route path="/:slug/login" element={<Login />} />
+          
+          {/* Rutas protegidas por contratista */}
+          <Route path="/:slug" element={<ProtectedRoute />}>
+            <Route path="home" element={<RoleRedirect />} />  
+            <Route path="dashboard" element={<Dashboard />} />
+            <Route path="formulario/:id" element={<FormularioDetalle />} />
+            <Route path="crear-formulario" element={<CrearFormulario />} />
+            <Route path="tecnico/:id" element={<TecnicoPerfil />} />
+            <Route path="tecnicos" element={<TecnicosAdmin />} />
+            
+            {/* Rutas de admin por contratista */}
+            <Route path="admin/dashboard" element={<AdminDashboard />} />
+            <Route path="admin/tecnicos" element={<AdminTecnicos />} />
+            <Route path="admin/formulario/:id" element={<AdminFormularioDetalle />} />
           </Route>
+          
           {/* cualquiera que no matchee va a la landing */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

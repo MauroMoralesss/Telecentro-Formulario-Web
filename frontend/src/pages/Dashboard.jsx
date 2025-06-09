@@ -1,11 +1,12 @@
 import { useAuth } from "../context/AuthContext";
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 
 import axios from "../api/axios.js";
 import FormularioCard from "../components/FormularioCard";
 import FiltrosAvanzados from "../components/FiltrosAvanzados";
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 import toast from "react-hot-toast";
 import "../styles/dashboard.css";
@@ -26,12 +27,14 @@ function Dashboard() {
     return saved ? JSON.parse(saved) : [];
   });
   const formulariosPorPagina = 10;
+  const [isLoading, setIsLoading] = useState(true);
 
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   useEffect(() => {
     const cargarFormularios = async () => {
       try {
+        setIsLoading(true);
         const ruta =
           usuario.rol === "admin" ? "/formularios" : "/formularios/mios";
         const res = await axios.get(`${ruta}`, {
@@ -40,6 +43,8 @@ function Dashboard() {
         setFormularios(res.data);
       } catch (error) {
         console.error("Error cargando formularios:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -54,11 +59,12 @@ function Dashboard() {
     if (usuario?.rol !== "admin") return;
 
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/api/formularios/events`, {
+    const evtSource = new EventSource(`${base}/formularios/events`, {
       withCredentials: true,
     });
 
     evtSource.addEventListener("formulario-actualizado", (e) => {
+      console.log("Evento SSE recibido:", e.data);
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
 
       // 1. Actualizar el estado local
@@ -99,7 +105,7 @@ function Dashboard() {
               }}
               onClick={() => {
                 t.remove();
-                navigate(`/formulario/${id}`);
+                navigate(`/${slug}/formulario/${id}`);
               }}
             >
               Ver detalles
@@ -120,6 +126,9 @@ function Dashboard() {
     localStorage.setItem("notifications", JSON.stringify(notifications));
   }, [notifications]);
 
+  if (isLoading) {
+    return <LoadingSpinner message="Cargando formularios..." size="large" />;
+  }
   if (cargando) return <p>Cargando sesión...</p>;
   if (!usuario) return <p>No estás logueado</p>;
 
@@ -155,13 +164,13 @@ function Dashboard() {
       >
         {usuario?.rol === "admin" && (
           <>
-            <button onClick={() => navigate("/admin/dashboard")}>
+            <button onClick={() => navigate(`/${slug}/admin/dashboard`)}>
               NUEVO DISEÑO
             </button>
-            <button onClick={() => navigate("/crear-formulario")}>
+            <button onClick={() => navigate(`/${slug}/crear-formulario`)}>
               ➕ Crear formulario
             </button>
-            <button onClick={() => navigate("/tecnicos")}>
+            <button onClick={() => navigate(`/${slug}/tecnicos`)}>
               👥 Ver técnicos
             </button>
           </>
@@ -170,7 +179,7 @@ function Dashboard() {
           <Link
             className="link"
             style={{ color: "white" }}
-            to={`/tecnico/${usuario.id_tecnico}`}
+            to={`/${slug}/tecnico/${usuario.id_tecnico}`}
           >
             Ver perfil
           </Link>

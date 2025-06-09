@@ -1,6 +1,6 @@
 import { useHistorial } from '../../hooks/useHistorial';
 import HistorialItem from '../HistorialItem';
-import { LoadingState } from '../ui/LoadingState';
+import { LoadingSpinner } from '../LoadingSpinner';
 import '../../styles/historial.css';
 
 export const HistorialFormulario = ({ formularioId }) => {
@@ -11,7 +11,7 @@ export const HistorialFormulario = ({ formularioId }) => {
   } = useHistorial(formularioId);
 
   if (isLoading) {
-    return <LoadingState mensaje="Cargando historial..." />;
+    return <LoadingSpinner message="Cargando historial..." size="medium" />;
   }
 
   if (error) {

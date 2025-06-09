@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import axios from "../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 function TecnicosAdmin() {
   const [tecnicos, setTecnicos] = useState([]);
@@ -21,7 +22,7 @@ function TecnicosAdmin() {
   const tecnicosPorPagina = 8;
 
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   useEffect(() => {
     const cargarTecnicos = async () => {
       const res = await axios.get("/tecnicos", { withCredentials: true });
@@ -196,11 +197,13 @@ function TecnicosAdmin() {
                 )}
               </p>
               <div className="acciones">
-                <button
-                  onClick={() => navigate(`/tecnico/${tecnico.id_tecnico}`)}
+                <Link
+                  className="link"
+                  style={{ color: "white" }}
+                  to={`/${slug}/tecnico/${tecnico.id_tecnico}`}
                 >
                   Ver perfil
-                </button>
+                </Link>
                 <button
                   className={tecnico.activo ? "btn-rojo" : "btn-verde"}
                   onClick={() =>
@@ -233,7 +236,7 @@ function TecnicosAdmin() {
             </button>
           </div>
         )}
-        <button onClick={() => navigate("/dashboard")} className="btn btn-back">
+        <button onClick={() => navigate(`/${slug}/dashboard`)} className="btn btn-back">
           ← Volver al Dashboard
         </button>
       </div>

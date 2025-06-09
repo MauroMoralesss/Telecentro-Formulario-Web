@@ -1,6 +1,6 @@
 import React from "react";
 import { FiEye, FiMoreVertical } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 // Helper: formatea la fecha al estilo es-AR
 function formatDate(dateStr) {
@@ -76,10 +76,11 @@ export const columns = [
     cell: ({ row }) => {
       const navigate = useNavigate();
       const id = row.original.id_formulario;
+      const { slug } = useParams();
       return (
         <div style={{ display: "flex", gap: 8, justifyContent: "flex-center" }}>
           <button
-            onClick={() => navigate(`/admin/formulario/${id}`)}
+            onClick={() => navigate(`/${slug}/admin/formulario/${id}`)}
             className="btn-icon"
             title="Ver detalles"
           >

@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "../api/axios";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useParams } from "react-router-dom";
 import Select from "react-select";
 
 function CrearFormulario() {
@@ -18,7 +18,7 @@ function CrearFormulario() {
   const [successMsg, setSuccessMsg] = useState("");
 
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   useEffect(() => {
     const cargarTecnicos = async () => {
       const res = await axios.get("/tecnicos", { withCredentials: true });
@@ -46,7 +46,7 @@ function CrearFormulario() {
       setSuccessMsg("Formulario creado correctamente");
 
       setTimeout(() => {
-        navigate("/dashboard");
+        navigate(`/${slug}/dashboard`);
       }, 2000);
     } catch (error) {
       const mensaje = error.response?.data?.message || "Error del servidor";

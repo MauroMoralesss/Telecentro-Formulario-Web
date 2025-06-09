@@ -9,6 +9,7 @@ import authRoutes from "./routes/auth.routes.js";
 import formulariosRoutes from "./routes/formularios.routes.js";
 import tecnicosRoutes from "./routes/tecnicos.routes.js";
 import historialRoutes from "./routes/historial.routes.js";
+import contratistasRoutes from "./routes/contratistas.routes.js";
 import { ORIGIN } from "./config.js";
 import { pool } from "./db.js";
 
@@ -54,6 +55,8 @@ app.use("/api", authRoutes);
 app.use("/api", formulariosRoutes);
 app.use("/api", tecnicosRoutes);
 app.use("/api", historialRoutes);
+app.use("/api", contratistasRoutes);
+
 
 // Error Handler
 app.use((err, req, res, next) => {

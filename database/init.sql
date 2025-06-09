@@ -93,8 +93,7 @@ CREATE TABLE public.dispositivo (
     REFERENCES public.formulario(id_formulario)
     ON DELETE CASCADE,
   tipo varchar(50)    NOT NULL,
-  mac  varchar(50)    NOT NULL,
-  UNIQUE (formulario_id)
+  mac  varchar(50)    NOT NULL
 );
 
 ALTER TABLE dispositivo DROP CONSTRAINT dispositivo_formulario_id_key;
@@ -120,3 +119,51 @@ CREATE INDEX IF NOT EXISTS idx_historial_tecnico_id ON historial_formulario(tecn
 CREATE INDEX IF NOT EXISTS idx_historial_fecha ON historial_formulario(fecha_accion);
 
 ALTER TYPE motivo_cierre_enum ADD VALUE 'Instalación cableada sin terminar';
+
+-- Tabla de Contratistas simplificada
+CREATE TABLE contratistas (
+    id_contratista SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    slug VARCHAR(50) UNIQUE NOT NULL, -- Para URLs amigables (ej: "bptel")
+    logo_url TEXT,
+    colores_tema JSON, -- Mantenemos esto para la personalización básica
+    activo BOOLEAN DEFAULT true,
+    fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Modificar tabla de técnicos para incluir el contratista
+ALTER TABLE tecnicos
+ADD COLUMN id_contratista INTEGER REFERENCES contratistas(id_contratista);
+
+-- Modificar tabla de formularios para incluir el contratista
+ALTER TABLE formulario
+ADD COLUMN id_contratista INTEGER REFERENCES contratistas(id_contratista);
+
+-- 1. Primero insertamos la contratista BPTEL
+INSERT INTO contratistas (
+    nombre,
+    slug,
+    colores_tema,
+    activo
+) VALUES (
+    'BPTEL',
+    'bptel',
+    '{"primary": "#2E424D", "secondary": "#5C8374"}',
+    true
+) RETURNING id_contratista;
+
+-- 2. Actualizamos todos los técnicos existentes
+UPDATE tecnicos 
+SET id_contratista = (
+    SELECT id_contratista 
+    FROM contratistas 
+    WHERE slug = 'bptel'
+);
+
+-- 3. Actualizamos todos los formularios existentes
+UPDATE formulario 
+SET id_contratista = (
+    SELECT id_contratista 
+    FROM contratistas 
+    WHERE slug = 'bptel'
+);

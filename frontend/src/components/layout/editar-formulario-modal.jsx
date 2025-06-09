@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "../../api/axios";
 import Select from "react-select";
 import { IoClose } from "react-icons/io5";
-import { FaSpinner } from "react-icons/fa";
+import { LoadingSpinner } from '../LoadingSpinner';
 
 function EditarFormularioModal({ onClose, formulario, onUpdate }) {
   const [tecnicos, setTecnicos] = useState([]);
@@ -162,6 +162,11 @@ function EditarFormularioModal({ onClose, formulario, onUpdate }) {
   return (
     <div className="modal-overlay">
       <div className="modal-content">
+        {isLoading && (
+          <div className="modal-loading">
+            <LoadingSpinner message="Guardando cambios..." size="small" />
+          </div>
+        )}
         <div className="modal-header">
           <h2>Editar Formulario</h2>
           <button onClick={onClose} className="close-button">
@@ -296,10 +301,7 @@ function EditarFormularioModal({ onClose, formulario, onUpdate }) {
               disabled={isLoading}
             >
               {isLoading ? (
-                <>
-                  <FaSpinner className="spinner" /> 
-                  Guardando...
-                </>
+                'Guardar cambios'
               ) : (
                 'Guardar cambios'
               )}

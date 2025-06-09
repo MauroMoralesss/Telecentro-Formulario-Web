@@ -1,10 +1,10 @@
 // src/components/FormularioCard.jsx
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { FaTimesCircle } from "react-icons/fa";
 
 function FormularioCard({ form }) {
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   const estadoColor = {
     Aprobado: "#2e7d32",
     Rechazado: "#c62828",
@@ -68,7 +68,7 @@ function FormularioCard({ form }) {
 
         <button
           className="btn btn-primary form-card__btn"
-          onClick={() => navigate(`/formulario/${form.id_formulario}`)}
+          onClick={() => navigate(`/${slug}/formulario/${form.id_formulario}`)}
         >
           Ver detalles
         </button>

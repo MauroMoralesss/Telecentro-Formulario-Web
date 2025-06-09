@@ -1,7 +1,7 @@
 // src/components/NotificationsPanel.jsx
 import React, { useState } from "react";
 import { FiBell, FiTrash2 } from "react-icons/fi";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 
 export default function NotificationsPanel({
   notifications,
@@ -10,7 +10,7 @@ export default function NotificationsPanel({
   const [open, setOpen] = useState(false);
   const unreadCount = notifications.filter((n) => !n.leido).length;
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   const markAllRead = () => {
     setNotifications((prev) => prev.map((n) => ({ ...n, leido: true })));
   };
@@ -67,7 +67,7 @@ export default function NotificationsPanel({
                       className="btn-ver-formulario"
                       onClick={() => {
                         setOpen(false);
-                        navigate(`/admin/formulario/${n.id_formulario}`);
+                        navigate(`/${slug}/admin/formulario/${n.id_formulario}`);
                       }}
                     >
                       Ver detalles

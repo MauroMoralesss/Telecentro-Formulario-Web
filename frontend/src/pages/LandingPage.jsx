@@ -9,15 +9,15 @@ export const LandingPage = () => {
       <header className="landing-header">
         <nav className="landing-nav">
           <div className="landing-logo">
-            <img 
+            {/* <img 
               src="https://res.cloudinary.com/dfe8vpoxs/image/upload/v1748550164/magoo.png" 
               alt="Magoo Solutions Logo" 
               className="logo-image"
-            />
+            /> */}
             <h1>Magoo Solutions</h1>
           </div>
           <div className="landing-nav-links">
-            <Link to="/login" className="landing-button">Iniciar Sesión</Link>
+            <Link to="/contratistas" className="landing-button">Iniciar Sesión</Link>
           </div>
         </nav>
       </header>
@@ -27,7 +27,7 @@ export const LandingPage = () => {
         <div className="hero-content">
           <h1>Gestión de Informes Técnicos</h1>
           <p>Simplifica el proceso de instalación y mantenimiento con nuestra plataforma especializada</p>
-          <Link to="/login" className="cta-button">Comenzar Ahora</Link>
+          <Link to="/contratistas" className="cta-button">Comenzar Ahora</Link>
         </div>
         <div className="hero-image">
           <img 
@@ -102,7 +102,7 @@ export const LandingPage = () => {
           </div>
         </div>
         <div className="footer-bottom">
-          <p>&copy; 2024 Magoo Solutions. Todos los derechos reservados.</p>
+          <p>&copy; 2025 Magoo Solutions. Todos los derechos reservados.</p>
         </div>
       </footer>
     </div>

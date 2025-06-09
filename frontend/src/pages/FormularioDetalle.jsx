@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
 import { getCurrentPositionPromise } from "../api/geolocation.js";
 import DispositivoScanner from "../components/DispositivoScanner.jsx";
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 import { AiOutlineWarning } from "react-icons/ai";
 
@@ -64,7 +65,24 @@ function FormularioDetalle() {
     }
   }, [formulario]);
 
-  if (!formulario) return <p>Cargando formulario...</p>;
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      // Puedes personalizar la condición según tu lógica
+      // Por ejemplo, si hay campos llenos o el formulario no está enviado
+      e.preventDefault();
+      e.returnValue = ""; // Necesario para que algunos navegadores muestren el mensaje
+    };
+
+    window.addEventListener("beforeunload", handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
+    };
+  }, []);
+
+  if (!formulario) {
+    return <LoadingSpinner message="Cargando formulario..." size="large" />;
+  }
 
   const cambiarEstado = async (nuevoEstado, motivo = "") => {
     try {
@@ -95,39 +113,41 @@ function FormularioDetalle() {
   const enviarFormulario = async (e) => {
     e.preventDefault();
 
-    // Intentar capturar coordenadas
-    let latitud, longitud;
-    try {
-      const { coords } = await getCurrentPositionPromise({ timeout: 5000 });
-      latitud = coords.latitude;
-      longitud = coords.longitude;
-    } catch (err) {
-      console.warn("No se pudo obtener ubicación:", err.message);
-      // continuamos sin coordenadas
-    }
-
     if (enviando || !archivoInterior || !archivoExterior) {
       setAlerta("❌ Debes subir ambos videos: interior y exterior");
       return;
     }
 
     setEnviando(true);
-    setAlerta("⏳ Subiendo ambos videos (interior y exterior)… 📤");
+    setAlerta("⏳ Subiendo videos y procesando formulario...");
     setProgreso(1);
 
     try {
+      // Intentar capturar coordenadas
+      let latitud, longitud;
+      try {
+        const { coords } = await getCurrentPositionPromise({ timeout: 5000 });
+        latitud = coords.latitude;
+        longitud = coords.longitude;
+      } catch (err) {
+        console.warn("No se pudo obtener ubicación:", err.message);
+        // continuamos sin coordenadas
+      }
+
       const formData = new FormData();
-      if (archivoInterior) formData.append("video_interior", archivoInterior);
-      if (archivoExterior) formData.append("video_exterior", archivoExterior);
+      formData.append("video_interior", archivoInterior);
+      formData.append("video_exterior", archivoExterior);
       if (archivoExtra) formData.append("video_extra", archivoExtra);
       formData.append("motivo_cierre", motivoCierre);
-      formData.append("checklist", seleccionados.join(", "));
+      formData.append("checklist", JSON.stringify(seleccionados));
       formData.append("observaciones", observaciones);
-      formData.append("dispositivos", JSON.stringify(dispositivos));
-      // Añadir coords si las tenemos
-      if (latitud != null && longitud != null) {
-        formData.append("latitud", latitud);
-        formData.append("longitud", longitud);
+      if (latitud) formData.append("latitud", latitud);
+      if (longitud) formData.append("longitud", longitud);
+      
+      // Agregar dispositivos al formData
+      if (dispositivos.length > 0) {
+        console.log('Enviando dispositivos:', dispositivos);
+        formData.append("dispositivos", JSON.stringify(dispositivos));
       }
 
       const res = await axios.patch(
@@ -137,7 +157,7 @@ function FormularioDetalle() {
           headers: {
             "Content-Type": "multipart/form-data",
           },
-          timeout: 10 * 60 * 1000,
+          withCredentials: true,
           onUploadProgress: (event) => {
             if (event.lengthComputable) {
               let percent = Math.round((event.loaded * 100) / event.total);
@@ -153,36 +173,50 @@ function FormularioDetalle() {
       );
 
       setProgreso(100);
-      setAlerta(
-        "✅ Videos comprimidos y subidos correctamente. Guardando datos..."
-      );
+      setAlerta("✅ Formulario completado correctamente");
       await new Promise((r) => setTimeout(r, 1000));
 
       setFormulario(res.data);
-      setAlerta("✅ Formulario enviado correctamente");
-      setPreviewUrl(null);
-
-      setTimeout(() => {
-        setSeleccionados([]);
-        setMotivoCierre("");
-        setObservaciones("");
-        setArchivoInterior(null);
-        setArchivoExterior(null);
-        setPreviewInterior(null);
-        setPreviewExterior(null);
-      }, 1000);
-    } catch (error) {
-      console.error("Error al completar formulario", error);
-      setAlerta("❌ Error al enviar el formulario");
-    } finally {
       setEnviando(false);
-      setTimeout(() => setAlerta(""), 4000);
+      setSeleccionados([]);
+      setMotivoCierre("");
+      setObservaciones("");
+      setArchivoInterior(null);
+      setArchivoExterior(null);
+      setPreviewInterior(null);
+      setPreviewExterior(null);
+      setArchivoExtra(null);
+      setPreviewExtra(null);
+      setDispositivos([]);
+      setEstadoMsg("✅ Formulario completado correctamente");
+      setTimeout(() => setEstadoMsg(""), 3000);
+    } catch (err) {
+      console.error("Error al enviar formulario:", err);
+      setAlerta(
+        err.response?.data?.message || "❌ Error al enviar el formulario"
+      );
+      setEnviando(false);
       setProgreso(0);
     }
   };
 
   return (
     <div className="formulario-detalle-container card-container">
+      {enviando && (
+        <div className="loading-overlay">
+          <div className="loading-content">
+            <LoadingSpinner 
+              message={alerta} 
+              size="medium"
+            />
+            {progreso > 0 && progreso < 100 && (
+              <p style={{ fontSize: 12, color: "#555", marginTop: 8 }}>
+                Tiempo restante estimado: ~{Math.round((100 - progreso) / 2)}s
+              </p>
+            )}
+          </div>
+        </div>
+      )}
       <div className="card" style={{ padding: 20 }}>
         <h2 style={{ marginBottom: 12 }}>📋 Orden N° {formulario.nro_orden}</h2>
 
@@ -685,36 +719,6 @@ function FormularioDetalle() {
                 "Enviar formulario"
               )}
             </button>
-
-            {enviando && progreso > 0 && (
-              <div style={{ marginTop: 10 }}>
-                <div
-                  style={{ height: 10, background: "#ddd", borderRadius: 4 }}
-                >
-                  <div
-                    style={{
-                      width: `${progreso}%`,
-                      height: "100%",
-                      background: "#3b82f6",
-                      borderRadius: 4,
-                    }}
-                  ></div>
-                </div>
-                <p style={{ fontSize: 12, marginTop: 4 }}>{progreso}% subido</p>
-                {progreso > 0 && progreso < 100 && (
-                  <p style={{ fontSize: 12, color: "#555" }}>
-                    Tiempo restante estimado: ~
-                    {Math.round((100 - progreso) / 2)}s
-                  </p>
-                )}
-              </div>
-            )}
-            {enviando && progreso === 99 && (
-              <div style={{ marginTop: 10, fontSize: 12, color: "#555" }}>
-                <span className="spinner" style={{ marginRight: 5 }} />
-                Procesando en el servidor...
-              </div>
-            )}
           </form>
         )}
 

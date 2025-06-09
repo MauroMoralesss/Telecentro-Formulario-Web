@@ -1,6 +1,6 @@
 // src/pages/AdminTecnicos.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
 import Layout from "../components/layout/Layout.jsx";
@@ -26,7 +26,7 @@ import "../styles/modal.css";
 export default function AdminTecnicos() {
   const navigate = useNavigate();
   const { logout, usuario } = useAuth();
-
+  const { slug } = useParams();
   // Estado local
   const [tecnicos, setTecnicos] = useState([]);
   const [filtroId, setFiltroId] = useState("");
@@ -55,11 +55,12 @@ export default function AdminTecnicos() {
   // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/api/formularios/events`, {
+    const evtSource = new EventSource(`${base}/formularios/events`, {
       withCredentials: true,
     });
 
     evtSource.addEventListener("formulario-actualizado", (e) => {
+      console.log("Evento SSE recibido:", e.data);
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
 
       // 2. Guardar la notificación
@@ -93,7 +94,7 @@ export default function AdminTecnicos() {
               }}
               onClick={() => {
                 toast.remove(t.id);
-                navigate(`/admin/formulario/${id}`);
+                navigate(`/${slug}/admin/formulario/${id}`);
               }}
             >
               Ver detalles
@@ -160,7 +161,7 @@ export default function AdminTecnicos() {
       setNotifications={setNotifications}
       onLogout={() => {
         logout();
-        navigate("/login");
+        navigate(`/${slug}/login`);
       }}
     >
       <div className="tecnicos-view-container">

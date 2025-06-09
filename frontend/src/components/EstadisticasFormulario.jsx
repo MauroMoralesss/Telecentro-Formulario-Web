@@ -58,6 +58,34 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
     return formatearTiempo(resumenGeneral.tiempo_total_segundos);
   };
 
+  const renderValor = (valor) => {
+    if (Array.isArray(valor)) {
+      return (
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {valor.map((v, i) => (
+            <li key={i}>{renderValor(v)}</li>
+          ))}
+        </ul>
+      );
+    }
+    if (typeof valor === 'object' && valor !== null) {
+      // Si es un objeto de videos, NO mostrar nada en estadísticas
+      if (
+        Object.keys(valor).length &&
+        ['interior', 'exterior', 'extra'].some((k) => Object.keys(valor).includes(k))
+      ) {
+        return <span style={{ color: '#888' }}>No aplica</span>;
+      }
+      // Si es otro objeto, mostrarlo como string legible en <pre>
+      return <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#f8f8f8', borderRadius: 4, padding: 4 }}>{JSON.stringify(valor, null, 2)}</pre>;
+    }
+    return <>{valor}</>;
+  };
+
+  const esObjetoVideo = (valor) =>
+    valor && typeof valor === 'object' &&
+    ['interior', 'exterior', 'extra'].some(k => Object.keys(valor).includes(k));
+
   return (
     <div className="estadisticas-contenedor">
       {/* Resumen General */}
@@ -119,7 +147,7 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
                     }}
                   />
                 </div>
-                <span className="barra-valor">{accion.total} ({accion.porcentaje}%)</span>
+                <div className="barra-valor">{renderValor(accion.total)} ({renderValor(accion.porcentaje)}%)</div>
               </div>
             ))}
           </div>
@@ -141,20 +169,20 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
                     <FaUser className="icon-small" />
                     {tecnico.tecnico_nombre || 'Sin nombre'}
                   </span>
-                  <span className="tecnico-total">{tecnico.total_acciones} acciones</span>
+                  <span className="tecnico-total">{renderValor(tecnico.total_acciones)} acciones</span>
                 </div>
                 <div className="tecnico-detalles">
                   <div className="detalle-item">
                     <span className="detalle-label">Tipos de acciones:</span>
-                    <span className="detalle-valor">{tecnico.tipos_acciones}</span>
+                    <span className="detalle-valor">{renderValor(tecnico.tipos_acciones)}</span>
                   </div>
                   <div className="detalle-item">
                     <span className="detalle-label">Primera actividad:</span>
-                    <span className="detalle-valor">{formatearFecha(tecnico.primera_accion)}</span>
+                    <span className="detalle-valor">{renderValor(formatearFecha(tecnico.primera_accion))}</span>
                   </div>
                   <div className="detalle-item">
                     <span className="detalle-label">Última actividad:</span>
-                    <span className="detalle-valor">{formatearFecha(tecnico.ultima_accion)}</span>
+                    <span className="detalle-valor">{renderValor(formatearFecha(tecnico.ultima_accion))}</span>
                   </div>
                 </div>
               </div>
@@ -174,14 +202,14 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
             {flujoEstados.map((cambio, index) => (
               <div key={index} className="estado-cambio">
                 <div className="estado-header">
-                  <span className="estado-anterior">{cambio.estado_anterior || 'Inicio'}</span>
+                  <span className="estado-anterior">{renderValor(cambio.estado_anterior || 'Inicio')}</span>
                   <FaExchangeAlt className="icon-small" />
-                  <span className="estado-nuevo">{cambio.estado_nuevo}</span>
+                  <span className="estado-nuevo">{renderValor(cambio.estado_nuevo)}</span>
                 </div>
                 <div className="estado-detalles">
-                  <span className="estado-total">{cambio.total} veces</span>
+                  <span className="estado-total">{renderValor(cambio.total)} veces</span>
                   <span className="estado-tiempo">
-                    Tiempo promedio: {formatearTiempo(cambio.tiempo_promedio_segundos)}
+                    Tiempo promedio: {renderValor(formatearTiempo(cambio.tiempo_promedio_segundos))}
                   </span>
                 </div>
               </div>
@@ -208,8 +236,8 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
                   })}
                 </div>
                 <div className="dia-detalles">
-                  <span className="dia-total">{dia.total_acciones} acciones</span>
-                  <span className="dia-tipos">{dia.tipos_acciones}</span>
+                  <span className="dia-total">{renderValor(dia.total_acciones)} acciones</span>
+                  <span className="dia-tipos">{renderValor(dia.tipos_acciones)}</span>
                 </div>
               </div>
             ))}
@@ -225,25 +253,25 @@ export const EstadisticasFormulario = ({ estadisticas }) => {
             Campos más modificados
           </h3>
           <div className="grafico-barras">
-            {camposModificados.map((campo, index) => (
-              <div key={index} className="barra-container">
-                <span className="barra-etiqueta">
-                  <FaEdit className="icon-small" />
-                  {formatearNombreCampo(campo.campo)}
-                </span>
-                <div className="barra">
-                  <div 
-                    className="barra-relleno"
-                    style={{ 
-                      width: `${(campo.total_modificaciones / resumenGeneral?.total_cambios) * 100}%` 
-                    }}
-                  />
+            {camposModificados
+              .filter(campo => !esObjetoVideo(campo.valor))
+              .map((campo, index) => (
+                <div key={index} className="barra-container">
+                  <span className="barra-etiqueta">
+                    <FaEdit className="icon-small" />
+                    {renderValor(formatearNombreCampo(campo.campo))}
+                  </span>
+                  <div className="barra">
+                    <div 
+                      className="barra-relleno"
+                      style={{ 
+                        width: `${(campo.total_modificaciones / resumenGeneral?.total_cambios) * 100}%` 
+                      }}
+                    />
+                  </div>
+                  <div className="barra-valor">{renderValor(campo.valor)}</div>
                 </div>
-                <span className="barra-valor">
-                  {campo.total_modificaciones}
-                </span>
-              </div>
-            ))}
+              ))}
           </div>
         </div>
       )}

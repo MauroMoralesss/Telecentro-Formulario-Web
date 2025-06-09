@@ -17,6 +17,8 @@ export const isAuth = (req, res, next) => {
 
     req.userId = decoded.id; 
     req.rol = decoded.rol;
+    req.id_contratista = decoded.id_contratista;
+    req.slug_contratista = decoded.slug_contratista;
 
     next();
   });

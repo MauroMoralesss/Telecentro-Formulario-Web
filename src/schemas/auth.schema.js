@@ -44,5 +44,9 @@ export const signinSchema = z.object({
         message: 'La contraseña debe tener al menos 2 caracteres'
     }).max(255, {
         message: 'La contraseña debe tener como maximo 255 caracteres'
+    }),
+    slug_contratista: z.string({
+        required_error: 'El contratista es requerido',
+        invalid_type_error: 'El contratista debe ser un texto'
     })
 })

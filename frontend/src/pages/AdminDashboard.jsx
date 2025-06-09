@@ -1,6 +1,6 @@
 // src/pages/AdminDashboard.jsx
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import axios from "../api/axios.js";
 import Layout from "../components/layout/Layout.jsx";
@@ -22,7 +22,7 @@ import "../styles/modal.css";
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { logout, usuario } = useAuth();
-
+  const { slug } = useParams();
   // Estado local
   const [formularios, setFormularios] = useState([]);
   const [activeTab, setActiveTab] = useState("Todos");
@@ -41,7 +41,17 @@ export default function AdminDashboard() {
     "Rechazado",
   ];
 
-  const [selectedDate, setSelectedDate] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const savedDate = localStorage.getItem('dashboardSelectedDate');
+    return savedDate ? new Date(savedDate) : new Date();
+  });
+
+  // Persistir el filtro de fecha en localStorage
+  useEffect(() => {
+    if (selectedDate) {
+      localStorage.setItem('dashboardSelectedDate', selectedDate.toISOString());
+    }
+  }, [selectedDate]);
 
   // Carga inicial de datos
   useEffect(() => {
@@ -54,11 +64,12 @@ export default function AdminDashboard() {
   // SSE para recibir actualizaciones en tiempo real
   useEffect(() => {
     const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
-    const evtSource = new EventSource(`${base}/api/formularios/events`, {
+    const evtSource = new EventSource(`${base}/formularios/events`, {
       withCredentials: true,
     });
 
     evtSource.addEventListener("formulario-actualizado", (e) => {
+      console.log("Evento SSE recibido:", e.data);
       const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
 
       // 1. Actualizar el estado local
@@ -99,7 +110,7 @@ export default function AdminDashboard() {
               }}
               onClick={() => {
                 toast.remove(t.id);
-                navigate(`/admin/formulario/${id}`);
+                navigate(`/${slug}/admin/formulario/${id}`);
               }}
             >
               Ver detalles
@@ -147,7 +158,7 @@ export default function AdminDashboard() {
       setNotifications={setNotifications}
       onLogout={() => {
         logout();
-        navigate("/login");
+        navigate(`/${slug}/login`);
       }}
     >
       <div className="date-navigator">

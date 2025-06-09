@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "../../api/axios";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import Select from "react-select";
 
 function FormularioModal({ onClose }) {
@@ -18,7 +18,7 @@ function FormularioModal({ onClose }) {
   const [successMsg, setSuccessMsg] = useState("");
 
   const navigate = useNavigate();
-
+  const { slug } = useParams();
   useEffect(() => {
     const cargarTecnicos = async () => {
       try {
@@ -52,7 +52,7 @@ function FormularioModal({ onClose }) {
 
       setTimeout(() => {
         onClose();
-        navigate("/admin/dashboard", { replace: true });
+        navigate(`/${slug}/admin/dashboard`, { replace: true });
       }, 2000);
     } catch (error) {
       const mensaje = error.response?.data?.message || "Error del servidor";

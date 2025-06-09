@@ -14,7 +14,7 @@ export const obtenerHistorial = async (req, res) => {
       });
     }
     
-    const historial = await obtenerHistorialFormulario(id_formulario);
+    const historial = await obtenerHistorialFormulario(id_formulario, req.id_contratista);
     res.json(historial);
   } catch (error) {
     console.error("Error al obtener historial:", error);
@@ -34,7 +34,7 @@ export const obtenerEstadisticas = async (req, res) => {
       });
     }
     
-    const estadisticas = await obtenerEstadisticasHistorial(id_formulario);
+    const estadisticas = await obtenerEstadisticasHistorial(id_formulario, req.id_contratista);
     res.json(estadisticas);
   } catch (error) {
     console.error("Error al obtener estadísticas:", error);
@@ -73,7 +73,7 @@ export const registrarHistorial = async (req, res, next) => {
       
       // Registrar la creación en el historial
       await registrarAccion({
-        formulario_id: res.locals.nuevoFormularioId, // El ID se debe guardar en res.locals en el controlador de creación
+        formulario_id: res.locals.nuevoFormularioId,
         tecnico_id,
         accion: "Creación",
         detalles: "Formulario creado",
@@ -93,7 +93,7 @@ export const registrarHistorial = async (req, res, next) => {
     }
 
     // Obtener estado anterior
-    const formularioAnterior = await obtenerFormularioPorId(id_formulario);
+    const formularioAnterior = await obtenerFormularioPorId(id_formulario, req.id_contratista);
     if (!formularioAnterior) {
       console.error(`No se encontró el formulario con ID ${id_formulario}`);
       return res.status(404).json({
@@ -115,10 +115,8 @@ export const registrarHistorial = async (req, res, next) => {
         nuevo: estado_nuevo
       };
     } else if (req.body.motivo_cierre) {
-      // Si hay motivo_cierre, es una completación de formulario
       accion = "Completar formulario";
       
-      // Solo registrar campos relevantes del formulario
       const camposARegistrar = ['motivo_cierre', 'checklist', 'observaciones'];
       camposARegistrar.forEach(campo => {
         if (req.body[campo] !== undefined) {
@@ -129,7 +127,6 @@ export const registrarHistorial = async (req, res, next) => {
         }
       });
     } else {
-      // Comparar campos modificados (excluyendo dispositivos y archivos)
       const cambios = { ...req.body };
       delete cambios.estado;
       delete cambios.dispositivos;
@@ -152,7 +149,6 @@ export const registrarHistorial = async (req, res, next) => {
       campos_modificados
     });
 
-    // Registrar en el historial
     await registrarAccion({
       formulario_id: id_formulario,
       tecnico_id,
@@ -166,9 +162,9 @@ export const registrarHistorial = async (req, res, next) => {
     console.log('Historial registrado exitosamente');
     next();
   } catch (error) {
-    console.error("Error al registrar historial:", error);
-    return res.status(500).json({
-      message: "Error al registrar en el historial",
+    console.error('Error al registrar historial:', error);
+    res.status(500).json({
+      message: "Error al registrar el historial",
       error: error.message
     });
   }

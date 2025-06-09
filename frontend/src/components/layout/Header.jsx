@@ -5,13 +5,15 @@ import NotificationsPanel from "../ui/NotificationsPanel.jsx";
 import Modal from "./modal-component";
 import FormularioModal from "./formulario-modal";
 import TecnicoModal from "./tecnico-modal";
+import { useParams } from "react-router-dom";
 
 export default function Header({ onLogout, notifications, setNotifications }) {
+  const { slug } = useParams();
   const [isFormularioModalOpen, setIsFormularioModalOpen] = useState(false);
   const [isTecnicoModalOpen, setIsTecnicoModalOpen] = useState(false);
   return (
     <header className="main-header">
-      <h1>Dashboard</h1>
+      <h1>{slug.toUpperCase()}</h1>
       <div className="header-actions">
         <button onClick={() => setIsFormularioModalOpen(true)}>
           <FiPlus /> Crear formulario

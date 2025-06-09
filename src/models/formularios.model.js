@@ -8,11 +8,12 @@ export const crearFormulario = async ({
   domicilio,
   telefono,
   servicios_instalar,
+  id_contratista
 }) => {
   const result = await pool.query(
     `INSERT INTO formulario (
-      tecnico_id, nro_orden, nro_cliente, nombre, domicilio, fecha_modificacion, telefono, servicios_instalar
-    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7) RETURNING *`,
+      tecnico_id, nro_orden, nro_cliente, nombre, domicilio, fecha_modificacion, telefono, servicios_instalar, id_contratista
+    ) VALUES ($1, $2, $3, $4, $5, CURRENT_TIMESTAMP, $6, $7, $8) RETURNING *`,
     [
       tecnico_id,
       nro_orden,
@@ -21,29 +22,38 @@ export const crearFormulario = async ({
       domicilio,
       telefono,
       servicios_instalar,
+      id_contratista
     ]
   );
   return result.rows[0];
 };
 
-export const obtenerTodosFormularios = async () => {
+export const obtenerTodosFormularios = async (id_contratista) => {
   const result = await pool.query(`SELECT 
       f.*, 
-      t.nombre AS tecnico_nombre 
+      t.nombre AS tecnico_nombre,
+      c.nombre as nombre_contratista,
+      c.slug as slug_contratista
     FROM formulario f
-    LEFT JOIN tecnicos t
-      ON f.tecnico_id = t.id_tecnico
-    ORDER BY f.fecha_creacion DESC`);
+    LEFT JOIN tecnicos t ON f.tecnico_id = t.id_tecnico
+    LEFT JOIN contratistas c ON f.id_contratista = c.id_contratista
+    WHERE f.id_contratista = $1
+    ORDER BY f.fecha_creacion DESC`, [id_contratista]);
   return result.rows;
 };
 
-export const obtenerFormularioPorId = async (id) => {
+export const obtenerFormularioPorId = async (id, id_contratista) => {
   const result = await pool.query(
-    `SELECT f.*, t.nombre as tecnico_nombre, t.email as tecnico_email 
+    `SELECT f.*, 
+      t.nombre as tecnico_nombre, 
+      t.email as tecnico_email,
+      c.nombre as nombre_contratista,
+      c.slug as slug_contratista
      FROM formulario f
      LEFT JOIN tecnicos t ON f.tecnico_id = t.id_tecnico
-     WHERE f.id_formulario = $1`,
-    [id]
+     LEFT JOIN contratistas c ON f.id_contratista = c.id_contratista
+     WHERE f.id_formulario = $1 AND f.id_contratista = $2`,
+    [id, id_contratista]
   );
   return result.rows[0];
 };
@@ -73,10 +83,15 @@ export const actualizarFormulario = async (id, datos) => {
   return result.rows[0];
 };
 
-export const obtenerFormulariosPorTecnico = async (tecnico_id) => {
+export const obtenerFormulariosPorTecnico = async (tecnico_id, id_contratista) => {
   const result = await pool.query(
-    `SELECT * FROM formulario WHERE tecnico_id = $1`,
-    [tecnico_id]
+    `SELECT f.*, 
+      c.nombre as nombre_contratista,
+      c.slug as slug_contratista
+     FROM formulario f
+     LEFT JOIN contratistas c ON f.id_contratista = c.id_contratista
+     WHERE f.tecnico_id = $1 AND f.id_contratista = $2`,
+    [tecnico_id, id_contratista]
   );
   return result.rows;
 };
@@ -103,7 +118,7 @@ export const editarCamposBasicos = async (id_formulario, datos) => {
         telefono = $6,
         servicios_instalar = $7,
         fecha_modificacion = CURRENT_TIMESTAMP
-      WHERE id_formulario = $8 
+      WHERE id_formulario = $8 AND id_contratista = $9
       RETURNING *
     `;
 
@@ -115,7 +130,8 @@ export const editarCamposBasicos = async (id_formulario, datos) => {
       datos.domicilio,
       datos.telefono,
       datos.servicios_instalar,
-      id_formulario
+      id_formulario,
+      datos.id_contratista
     ];
 
     const result = await pool.query(query, values);

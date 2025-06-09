@@ -12,7 +12,7 @@ export const AuthProvider = ({ children }) => {
   // Trae el perfil si ya hay cookie guardada
   const getProfile = async () => {
     try {
-      const res = await axios.get("/profile"); // ya usa withCredentials
+      const res = await axios.get("/profile");
       setUsuario(res.data);
     } catch {
       setUsuario(null);
@@ -21,10 +21,19 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Nuevo método de login: hace POST, guarda usuario y devuelve datos
-  const login = async ({ id_tecnico, password }) => {
-    const res = await axios.post("/signin", { id_tecnico, password });
-    setUsuario(res.data);      // <-- actualizo el estado de usuario
+  // Método de login: hace POST, guarda usuario y devuelve datos
+  const login = async ({ id_tecnico, password, slug_contratista }) => {
+    if (!slug_contratista) {
+      throw new Error("El contratista es requerido");
+    }
+    
+    const res = await axios.post("/signin", { 
+      id_tecnico, 
+      password,
+      slug_contratista 
+    });
+    
+    setUsuario(res.data);
     return res.data;
   };
 
@@ -32,7 +41,7 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     await axios.post("/signout");
     setUsuario(null);
-    navigate("/");
+    navigate("/contratistas");
   };
 
   useEffect(() => {

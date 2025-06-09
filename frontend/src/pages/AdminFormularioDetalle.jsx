@@ -37,11 +37,12 @@ import { useFetch } from "../hooks/useFetch";
 import { useHistorial } from "../hooks/useHistorial";
 import { HistorialFormulario } from "../components/layout/historial-formulario";
 import { EstadisticasFormulario } from '../components/EstadisticasFormulario';
+import { LoadingSpinner } from '../components/LoadingSpinner';
 
 export default function AdminFormularioDetalle() {
   const navigate = useNavigate();
   const { logout, usuario } = useAuth();
-
+  const { slug } = useParams();
   // Estado local
   const { id } = useParams();
   const { 
@@ -234,13 +235,71 @@ export default function AdminFormularioDetalle() {
     }
   };
 
+  // SSE para recibir actualizaciones en tiempo real
+  useEffect(() => {
+    const base = import.meta.env.VITE_BACKEND || "http://localhost:3000";
+    const evtSource = new EventSource(`${base}/formularios/events`, {
+      withCredentials: true,
+    });
+
+    evtSource.addEventListener("formulario-actualizado", (e) => {
+      console.log("Evento SSE recibido (detalle):", e.data);
+      const { id, nro_orden, nuevoEstado } = JSON.parse(e.data);
+
+      // 1. Actualizar el estado local si corresponde
+      if (formulario && formulario.id_formulario === id) {
+        fetchForm();
+      }
+
+      // 2. Guardar la notificación
+      const nuevaNotif = {
+        id: Date.now(),
+        mensaje: `Formulario N° ${nro_orden} → Estado: ${nuevoEstado}`,
+        fecha: new Date().toISOString(),
+        leido: false,
+        id_formulario: id,
+      };
+      setNotifications((prev) => [nuevaNotif, ...prev]);
+
+      // 3. Mostrar toast con botón
+      toast(
+        (t) => (
+          <div>
+            📋 <strong>Formulario N° {nro_orden}</strong>
+            <br />
+            Estado: <strong>{nuevoEstado}</strong>
+            <br />
+            <button
+              style={{
+                marginTop: 6,
+                background: "#1976d2",
+                color: "white",
+                border: "none",
+                padding: "6px 12px",
+                borderRadius: 4,
+                cursor: "pointer",
+              }}
+              onClick={() => {
+                toast.remove(t.id);
+                navigate(`/${slug}/admin/formulario/${id}`);
+              }}
+            >
+              Ver detalles
+            </button>
+          </div>
+        ),
+        {
+          duration: 7000,
+          position: "top-center",
+        }
+      );
+    });
+
+    return () => evtSource.close();
+  }, [formulario, fetchForm]);
+
   if (!formulario) {
-    return (
-      <div className="loading-container">
-        <FaSpinner className="spinner" />
-        <p>Cargando formulario...</p>
-      </div>
-    );
+    return <LoadingSpinner message="Cargando formulario..." size="large" color="#ff0000" />;
   }
 
   const formatDate = (dateString) => {
@@ -426,17 +485,65 @@ export default function AdminFormularioDetalle() {
     setShowEditModal(true);
   };
 
+  const renderValor = (valor) => {
+    if (Array.isArray(valor)) {
+      return (
+        <ul style={{ margin: 0, paddingLeft: 20 }}>
+          {valor.map((v, i) => (
+            <li key={i}>{renderValor(v)}</li>
+          ))}
+        </ul>
+      );
+    }
+    if (typeof valor === 'object' && valor !== null) {
+      // Si es un objeto de videos
+      if (
+        Object.keys(valor).length &&
+        ['interior', 'exterior', 'extra'].some((k) => Object.keys(valor).includes(k))
+      ) {
+        return (
+          <ul style={{ margin: 0, paddingLeft: 20 }}>
+            {valor.interior && (
+              <li>
+                <a href={valor.interior} target="_blank" rel="noopener noreferrer">
+                  Ver interior
+                </a>
+              </li>
+            )}
+            {valor.exterior && (
+              <li>
+                <a href={valor.exterior} target="_blank" rel="noopener noreferrer">
+                  Ver exterior
+                </a>
+              </li>
+            )}
+            {valor.extra && (
+              <li>
+                <a href={valor.extra} target="_blank" rel="noopener noreferrer">
+                  Ver extra
+                </a>
+              </li>
+            )}
+          </ul>
+        );
+      }
+      // Si es otro objeto, mostrarlo como string legible en <pre>
+      return <pre style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-all', background: '#f8f8f8', borderRadius: 4, padding: 4 }}>{JSON.stringify(valor, null, 2)}</pre>;
+    }
+    return <>{valor}</>;
+  };
+
   return (
     <Layout
       userName={usuario?.nombre}
       userEmail={usuario?.email}
       notifications={notifications}
       setNotifications={setNotifications}
-      onNew={() => navigate("/admin/formulario/nuevo")}
-      onViewTechs={() => navigate("/admin/tecnicos")}
+      onNew={() => navigate(`/${slug}/admin/formulario/nuevo`)}
+      onViewTechs={() => navigate(`/${slug}/admin/tecnicos`)}
       onLogout={() => {
         logout();
-        navigate("/login");
+        navigate(`/${slug}/login`); 
       }}
     >
       <LoadingState 
@@ -518,7 +625,15 @@ export default function AdminFormularioDetalle() {
               <div className="info-group">
                 <div className="info-item">
                   <span className="info-label">Servicios a instalar:</span>
-                  <p>{formulario.servicios_instalar}</p>
+                  {formulario.servicios_instalar ? (
+                    <ul style={{ margin: 0, paddingLeft: 20 }}>
+                      {formulario.servicios_instalar.split(/\r?\n/).filter((s) => s.trim() !== "").map((s, idx) => (
+                        <li key={idx}>{s}</li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <span>—</span>
+                  )}
                 </div>
                 <div className="info-item">
                   <span className="info-label">Fecha de creación:</span>
@@ -574,7 +689,7 @@ export default function AdminFormularioDetalle() {
                     ))}
                   </ul>
                 ) : (
-                  <p>—</p>
+                  <span>—</span>
                 )}
               </div>
             </div>
@@ -606,12 +721,12 @@ export default function AdminFormularioDetalle() {
             >
               Historial
             </button>
-            <button
+            {/* <button
                 className={`tab-button ${activeTab === "estadisticas" ? "active" : ""}`}
               onClick={() => setActiveTab("estadisticas")}
             >
               Estadísticas
-            </button>
+            </button> */}
           </div>
 
               <div className="card">

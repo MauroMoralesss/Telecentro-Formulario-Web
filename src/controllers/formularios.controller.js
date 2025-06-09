@@ -28,13 +28,18 @@ const execAsync = promisify(exec);
 // Crear formulario (admin)
 export const crear = async (req, res) => {
   try {
-    const formulario = await crearFormulario(req.body);
+    const formulario = await crearFormulario({
+      ...req.body,
+      id_contratista: req.id_contratista
+    });
+    
     // Registrar historial de creación
     const { registrarAccion } = await import("../models/historial.model.js");
     const camposModificados = {};
     Object.entries(req.body).forEach(([key, value]) => {
       camposModificados[key] = { anterior: null, nuevo: value };
     });
+    
     await registrarAccion({
       formulario_id: formulario.id_formulario,
       tecnico_id: req.userId,
@@ -44,6 +49,7 @@ export const crear = async (req, res) => {
       estado_nuevo: formulario.estado || "Iniciado",
       campos_modificados: camposModificados
     });
+    
     res.locals.nuevoFormularioId = formulario.id_formulario;
     res.status(201).json(formulario);
   } catch (error) {
@@ -54,25 +60,31 @@ export const crear = async (req, res) => {
 
 // Ver todos los formularios (admin)
 export const listarTodos = async (req, res) => {
-  const formularios = await obtenerTodosFormularios();
-  res.json(formularios);
+  try {
+    const formularios = await obtenerTodosFormularios(req.id_contratista);
+    res.json(formularios);
+  } catch (error) {
+    console.error("Error al obtener formularios:", error);
+    res.status(500).json({ error: "Error al obtener formularios" });
+  }
 };
 
 // Ver formulario por ID
 export const obtener = async (req, res) => {
   try {
-    const formulario = await obtenerFormularioPorId(req.params.id);
-    if (!formulario)
+    const formulario = await obtenerFormularioPorId(req.params.id, req.id_contratista);
+    if (!formulario) {
       return res.status(404).json({ message: "Formulario no encontrado" });
+    }
 
-    const dispositivos = await obtenerDispositivosPorFormulario(
-      formulario.id_formulario
-    );
+    // Obtener dispositivos del formulario
+    const dispositivos = await obtenerDispositivosPorFormulario(req.params.id);
+    console.log('Dispositivos encontrados:', dispositivos);
 
-    return res.json({ ...formulario, dispositivos });
-  } catch (err) {
-    console.error("Error al obtener el formulario:", err);
-    return res.status(500).json({ message: "Error interno del servidor" });
+    res.json({ ...formulario, dispositivos });
+  } catch (error) {
+    console.error("Error al obtener formulario:", error);
+    res.status(500).json({ message: "Error al obtener el formulario" });
   }
 };
 
@@ -97,38 +109,33 @@ export const cambiarEstado = async (req, res) => {
   });
 
   // Notifico a todos los clientes SSE conectados
-  broadcast("formulario-actualizado", {
-    id: formulario.id_formulario,
-    nro_orden: formulario.nro_orden,
-    nuevoEstado: formulario.estado,
-  });
+  // broadcast("formulario-actualizado", {
+  //   id: formulario.id_formulario,
+  //   nro_orden: formulario.nro_orden,
+  //   nuevoEstado: formulario.estado,
+  // });
 
   res.json(formulario);
 };
 
 // Obtener formularios propios (técnico)
 export const listarDelTecnico = async (req, res) => {
-  const formularios = await obtenerFormulariosPorTecnico(req.userId);
-  res.json(formularios);
+  try {
+    const formularios = await obtenerFormulariosPorTecnico(req.userId, req.id_contratista);
+    res.json(formularios);
+  } catch (error) {
+    console.error("Error al obtener formularios del técnico:", error);
+    res.status(500).json({ error: "Error al obtener formularios" });
+  }
 };
 
 // Completar formulario (técnico) con compresión previa con FFmpeg
 export const completar = async (req, res) => {
   try {
-    console.log('Iniciando completar formulario...');
-    console.log('Datos recibidos:', {
-      params: req.params,
-      body: req.body,
-      files: req.files
-    });
-
     const { id } = req.params;
-    if (!id) {
-      return res.status(400).json({ message: "ID de formulario requerido" });
-    }
 
-    // Validar que el formulario exista
-    const formularioExistente = await obtenerFormularioPorId(id);
+    // Verificar que el formulario existe y pertenece al contratista
+    const formularioExistente = await obtenerFormularioPorId(id, req.id_contratista);
     if (!formularioExistente) {
       return res.status(404).json({ message: "Formulario no encontrado" });
     }
@@ -201,20 +208,64 @@ export const completar = async (req, res) => {
       longitud: req.body.longitud || null
     };
 
-    console.log('Datos a actualizar en formulario:', datosActualizacion);
-
     // Actualizar el formulario
     const formularioActualizado = await actualizarFormulario(id, datosActualizacion);
 
     // Actualizar dispositivos
     if (dispositivos.length > 0) {
-      console.log('Actualizando dispositivos:', dispositivos);
       await borrarDispositivosPorFormulario(id);
       await crearDispositivos(id, dispositivos);
     }
 
     // Obtener dispositivos actualizados
     const dispositivosActualizados = await obtenerDispositivosPorFormulario(id);
+
+    // Registrar en el historial
+    const { registrarAccion } = await import("../models/historial.model.js");
+    const camposModificados = {
+      estado: {
+        anterior: formularioExistente.estado,
+        nuevo: "En revision"
+      },
+      motivo_cierre: {
+        anterior: formularioExistente.motivo_cierre,
+        nuevo: req.body.motivo_cierre
+      },
+      checklist: {
+        anterior: formularioExistente.checklist,
+        nuevo: req.body.checklist
+      },
+      observaciones: {
+        anterior: formularioExistente.observaciones,
+        nuevo: req.body.observaciones
+      },
+      videos: {
+        anterior: {
+          interior: formularioExistente.url_video_interior,
+          exterior: formularioExistente.url_video_exterior,
+          extra: formularioExistente.url_video_extra
+        },
+        nuevo: {
+          interior: url_video_interior,
+          exterior: url_video_exterior,
+          extra: url_video_extra
+        }
+      },
+      dispositivos: {
+        anterior: formularioExistente.dispositivos || [],
+        nuevo: dispositivos
+      }
+    };
+
+    await registrarAccion({
+      formulario_id: id,
+      tecnico_id: req.userId,
+      accion: "Completado",
+      detalles: "Formulario completado por técnico",
+      estado_anterior: formularioExistente.estado,
+      estado_nuevo: "En revision",
+      campos_modificados: camposModificados
+    });
 
     // —— BROADCAST DE NOTIFICACION ——
     broadcast("formulario-actualizado", {
@@ -252,7 +303,7 @@ export const editarCamposBasicos = async (req, res) => {
     }
 
     // Verificar si el formulario existe
-    const formularioExistente = await obtenerFormularioPorId(req.params.id);
+    const formularioExistente = await obtenerFormularioPorId(req.params.id, req.id_contratista);
     if (!formularioExistente) {
       return res.status(404).json({ message: "Formulario no encontrado" });
     }
@@ -272,7 +323,8 @@ export const editarCamposBasicos = async (req, res) => {
       nombre: req.body.nombre,
       domicilio: req.body.domicilio,
       telefono: req.body.telefono,
-      servicios_instalar: req.body.servicios_instalar
+      servicios_instalar: req.body.servicios_instalar,
+      id_contratista: req.id_contratista
     };
 
     // Actualizar formulario usando la función del modelo renombrada
