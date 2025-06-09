@@ -16,7 +16,7 @@ function FormularioModal({ onClose }) {
   });
   const [errorMsg, setErrorMsg] = useState("");
   const [successMsg, setSuccessMsg] = useState("");
-
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { slug } = useParams();
   useEffect(() => {
@@ -43,8 +43,10 @@ function FormularioModal({ onClose }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (isSubmitting) return;              // doble seguro
     setErrorMsg("");
     setSuccessMsg("");
+    setIsSubmitting(true);                 // ① comienzo envío
 
     try {
       await axios.post("/formularios", form, { withCredentials: true });
@@ -56,7 +58,9 @@ function FormularioModal({ onClose }) {
       }, 2000);
     } catch (error) {
       const mensaje = error.response?.data?.message || "Error del servidor";
-      setErrorMsg(mensaje);
+      setErrorMsg(`⚠️ ${mensaje}`);
+    } finally {
+      setIsSubmitting(false);              // ② envío finalizado
     }
   };
 
@@ -132,8 +136,12 @@ function FormularioModal({ onClose }) {
           <button type="button" className="btn btn-secondary" onClick={onClose}>
             Cancelar
           </button>
-          <button type="submit" className="btn btn-primary">
-            Crear
+          <button
+            type="submit"
+            className="btn btn-primary"
+            disabled={isSubmitting}       // ← deshabilitado aquí
+          >
+            {isSubmitting ? "Creando…" : "Crear"}
           </button>
         </div>
       </form>
