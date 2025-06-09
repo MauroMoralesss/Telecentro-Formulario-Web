@@ -167,3 +167,51 @@ SET id_contratista = (
     FROM contratistas 
     WHERE slug = 'bptel'
 );
+
+-- Ctra 2
+INSERT INTO contratistas (
+    nombre,
+    slug,
+    colores_tema,
+    activo
+) VALUES (
+    'contratista 2',
+    'contratista-2',
+    '{"primary": "#37474F", "secondary": "#B0BEC5"}',
+    true
+);
+
+-- Ctra 3
+INSERT INTO contratistas (
+    nombre,
+    slug,
+    colores_tema,
+    activo
+) VALUES (
+    'contratista 3',
+    'contratista-3',
+    '{"primary": "#3E2723", "secondary": "#A1887F"}',
+    true
+);
+
+INSERT INTO tecnicos (id_tecnico, nombre, email, password, rol, activo, id_contratista)
+VALUES (
+  111112,
+  'Magoo Contratista 2',
+  'admin@magoo.com',
+  '$2b$10$UdELc/VYgN7El5SXeyvime8PqyNzjsfMu/GEaOV6a/R7ordbKYKWG',
+  'admin',
+  true,
+  2
+);
+
+INSERT INTO tecnicos (id_tecnico, nombre, email, password, rol, activo, id_contratista)
+VALUES (
+  111113,
+  'Magoo Contratista 3',
+  'admin3@magoo.com',
+  '$2b$10$UdELc/VYgN7El5SXeyvime8PqyNzjsfMu/GEaOV6a/R7ordbKYKWG',
+  'admin',
+  true,
+  3
+);
