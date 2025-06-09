@@ -93,8 +93,8 @@ export const LandingPage = () => {
           </div>
           <div className="footer-section">
             <h3>Contacto</h3>
-            <p>Email: info@magoosolutions.com</p>
-            <p>Tel: (123) 456-7890</p>
+            <p>Email: info@magoo.com</p>
+            <p>Tel: (+54) 11 3234-1273</p>
           </div>
           <div className="footer-section">
             <h3>Enlaces Rápidos</h3>
