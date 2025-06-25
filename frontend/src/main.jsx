@@ -12,7 +12,7 @@ import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import RoleRedirect from "./components/RoleRedirect.jsx";
 import { Toaster } from "react-hot-toast";
 
-import { LandingPage } from "./pages/LandingPage.jsx";
+import LandingPage  from "./pages/LandingPage.jsx";
 import Login from "./pages/Login.jsx";
 import AdminDashboard from "./pages/AdminDashboard.jsx";
 import AdminFormularioDetalle from "./pages/AdminFormularioDetalle.jsx";
