@@ -87,7 +87,7 @@ const LandingPage = () => {
   return (
     <div className="landing-container">
       {/* Header */}
-      <header className="header">
+      <header className="header-landing">
         <nav className="nav">
           <div className="nav-brand">
             <svg

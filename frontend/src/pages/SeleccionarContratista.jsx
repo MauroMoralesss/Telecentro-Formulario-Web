@@ -1,54 +1,79 @@
 // /src/pages/SeleccionarContratista.jsx
-import { useEffect, useState } from "react";
-import axios from "../api/axios";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { LoadingSpinner } from '../components/LoadingSpinner';
 import { FiArrowRight, FiArrowLeft } from 'react-icons/fi';
+import axios from "../api/axios";
 
 export default function SeleccionarContratista() {
-  const [contratistas, setContratistas] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [contratistaNombre, setContratistaNombre] = useState("");
+  const [error, setError] = useState("");
+  const [isValidating, setIsValidating] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const cargar = async () => {
-      try {
-        setIsLoading(true);
-        const res = await axios.get("/contratistas/activos");
-        setContratistas(res.data);
-        setError(null);
-      } catch (err) {
-        setError("Error al cargar las empresas. Por favor, intenta nuevamente.");
-        console.error(err);
-      } finally {
-        setIsLoading(false);
+  const validarNombre = (nombre) => {
+    // Solo permite letras, números y guiones
+    const regex = /^[a-zA-Z0-9-]+$/;
+    return regex.test(nombre);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setIsValidating(true);
+
+    // Validar que no esté vacío
+    if (!contratistaNombre.trim()) {
+      setError("Por favor, ingresá el nombre de la contratista.");
+      setIsValidating(false);
+      return;
+    }
+
+    // Validar caracteres
+    if (!validarNombre(contratistaNombre.trim())) {
+      setError("El nombre ingresado contiene caracteres inválidos.");
+      setIsValidating(false);
+      return;
+    }
+
+    try {
+      // Crear slug y validar si existe
+      const slug = contratistaNombre.trim().toLowerCase();
+      
+      const response = await axios.get(`/contratistas/validar/${slug}`);
+      
+      if (response.data.existe) {
+        // Si existe, redirigir
+        navigate(`/${slug}/login`);
+      } else {
+        setError("Contratista no encontrada. Verificá el nombre e intentá nuevamente.");
       }
-    };
-    cargar();
-  }, []);
+    } catch (err) {
+      if (err.response?.status === 404) {
+        setError("Contratista no encontrada. Verificá el nombre e intentá nuevamente.");
+      } else if (err.response?.status === 400) {
+        setError("Esta contratista está inactiva. Contactá al administrador.");
+      } else {
+        setError("Error al validar la contratista. Intentá nuevamente.");
+      }
+      console.error("Error validando contratista:", err);
+    } finally {
+      setIsValidating(false);
+    }
+  };
 
-  if (isLoading) {
-    return (
-      <div className="selector-contratista">
-        <LoadingSpinner message="Cargando empresas..." size="large" />
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className="selector-contratista">
-        <div className="error-container">
-          <h2>¡Ups! Algo salió mal</h2>
-          <p>{error}</p>
-          <button onClick={() => window.location.reload()}>
-            Intentar nuevamente
-          </button>
-        </div>
-      </div>
-    );
-  }
+  const handleInputChange = (e) => {
+    let valor = e.target.value;
+    
+    // Reemplazar espacios internos por guiones
+    valor = valor.replace(/\s+/g, '-');
+    
+    setContratistaNombre(valor);
+    
+    // Limpiar error si el usuario está escribiendo
+    if (error) {
+      setError("");
+    }
+  };
 
   return (
     <div className="selector-contratista">
@@ -61,42 +86,37 @@ export default function SeleccionarContratista() {
       </button>
 
       <div className="selector-header">
-        <h1>Bienvenido</h1>
-        <p>Seleccioná tu empresa para continuar</p>
+        <h1>Magoo Solutions</h1>
+        <p>Ingresá el nombre de tu empresa para continuar</p>
       </div>
       
-      <div className="contratistas-grid">
-        {contratistas.map((c) => (
-          <div
-            key={c.slug}
-            className="contratista-card"
-            style={{ 
-              borderColor: c.colores_tema?.primary,
-              '--primary-color': c.colores_tema?.primary || '#007bff'
-            }}
-          >
-            <div className="card-content">
-              <div className="logo-container">
-                <img 
-                  src={c.logo_url && c.logo_url.trim() !== "" ? c.logo_url : "/user-svgrepo-com.svg"}
-                  alt={c.nombre} 
-                  onError={(e) => {
-                    e.target.onerror = null;
-                    e.target.src = '/user-svgrepo-com.svg';
-                  }}
-                />
-              </div>
-              <h3>{c.nombre}</h3>
-              <button 
-                onClick={() => navigate(`/${c.slug}/login`)}
-                className="ingresar-btn"
-              >
-                Ingresar
-                <FiArrowRight />
-              </button>
-            </div>
-          </div>
-        ))}
+      <form onSubmit={handleSubmit} className="contratista-form">
+        <div className="input-group">
+          <label htmlFor="contratista-nombre">Nombre de la empresa</label>
+          <input
+            id="contratista-nombre"
+            type="text"
+            value={contratistaNombre}
+            onChange={handleInputChange}
+            placeholder="Ej: Empresa-ABC"
+            className={error ? "form-error" : ""}
+            disabled={isValidating}
+          />
+          {error && <div className="form-error-message">{error}</div>}
+        </div>
+        
+        <button 
+          type="submit" 
+          className="ingresar-btn"
+          disabled={isValidating}
+        >
+          {isValidating ? "Validando..." : "Ingresar"}
+          {!isValidating && <FiArrowRight />}
+        </button>
+      </form>
+
+      <div className="autorizado-text">
+        <p>Solo personal autorizado</p>
       </div>
     </div>
   );

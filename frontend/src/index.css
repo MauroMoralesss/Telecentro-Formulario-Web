@@ -1168,3 +1168,38 @@ input[type="checkbox"] {
     flex-direction: column;
   }
 }
+
+/* Estilos para el formulario de selección de contratista */
+.contratista-form {
+  background-color: #fff;
+  padding: 28px;
+  margin: 20px auto;
+  border-radius: 10px;
+  box-shadow: 0 0 16px rgba(0, 0, 0, 0.05);
+  max-width: 500px;
+  width: 100%;
+}
+
+.form-error {
+  border-color: #dc3545 !important;
+  box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.2) !important;
+}
+
+.form-error-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 8px;
+  font-weight: 500;
+}
+
+.autorizado-text {
+  text-align: center;
+  margin-top: 20px;
+  color: #6c757d;
+  font-size: 14px;
+  font-style: italic;
+}
+
+.autorizado-text p {
+  margin: 0;
+}

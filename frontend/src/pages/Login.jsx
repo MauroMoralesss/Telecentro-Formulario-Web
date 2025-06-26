@@ -105,9 +105,9 @@ function Login() {
             </div>
           )}
           <h1>{(contratista?.nombre || slug).replace(/-/g, ' ').toUpperCase()}</h1>
-          <h2>¡Bienvenido de nuevo!</h2>
+          <h2>¡Bienvenido a Magoo Solutions!</h2>
           <p className="welcome-message">
-            Nos alegra verte de vuelta. Ingresa tus credenciales para continuar.
+            Ingresa tus credenciales para continuar.
           </p>
         </div>
 
