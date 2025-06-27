@@ -146,9 +146,9 @@ const LandingPage = () => {
 
             <div className="hero-stats animate-on-scroll">
               {[
-                { number: "1+", label: "Empresas Activas" },
-                { number: "20+", label: "Técnicos Registrados" },
-                { number: "1000+", label: "Informes Procesados" },
+                { number: "2+", label: "Empresas Activas" },
+                { number: "30+", label: "Técnicos Registrados" },
+                { number: "10000+", label: "Informes Procesados" },
               ].map((stat, index) => (
                 <div
                   key={index}
